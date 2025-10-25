@@ -39,7 +39,7 @@ int main()
 
     ParticleSystem particles(200000);
 
-    spawnOrbitalRing(particles, 800, 350.f, 100.f, {960.0f, 540.0f}, 1.f); 
+    spawnOrbitalRing(particles, 400, 350.f, 100.f, {960.0f, 540.0f}, 1.f); 
 
     sf::Clock clock;
 

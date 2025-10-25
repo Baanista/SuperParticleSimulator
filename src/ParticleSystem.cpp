@@ -4,7 +4,7 @@
 
 ParticleSystem::ParticleSystem(unsigned int maxParticles)
     : maxParticles_(maxParticles),
-      gravityField_(1920.f, 1080.f, 0.5f, 1000.0f) {
+      gravityField_(1920.f, 1080.f, 0.5f, 100.0f) {
         
     }
 
