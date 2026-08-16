@@ -10,7 +10,18 @@
 
 class ParticleSystem {
 public:
-    ParticleSystem(unsigned int maxParticles);
+    enum BorderBehavior {
+        WRAP,
+        BOUNCE,
+        NONE
+    };
+
+    ParticleSystem(unsigned int maxParticles, sf::Vector2f size, BorderBehavior behavior = WRAP);
+
+    bool nBodyGravity = false;
+    float downwardGravity = 10.f;
+    BorderBehavior borderBehavior = WRAP;
+    sf::Vector2f size;
 
     template<typename T, typename... Args>
     void emitOne(Args&&... args) {

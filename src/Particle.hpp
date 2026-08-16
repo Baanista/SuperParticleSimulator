@@ -11,10 +11,12 @@ public:
     void addVelocity(Particle*, double attraction);
     void nearAddVelocity(Particle* other, double attraction, double maxDist);
     void move(Particle* other, double attraction);
-    
+    sf::Vector2f position_;
+    sf::Vector2f velocity_;
 
 
     sf::Vector2f getPosition() const;
+    void setPosition(const sf::Vector2f& pos);
 
     bool isAlive() const;
 
@@ -24,10 +26,9 @@ public:
     
 
     protected:
-        sf::Vector2f position_;
-        sf::Vector2f velocity_;
+
         float radius_;
         float lifetime_;
-        float detectionRange_ = 32.f; // default, adjustable
+        float detectionRange_ = 64.f; // default, adjustable
         sf::Color color_;
 };

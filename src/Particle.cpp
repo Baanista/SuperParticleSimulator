@@ -5,9 +5,13 @@ Particle::Particle(const sf::Vector2f& position, const sf::Vector2f& velocity, f
 {}
 
 void Particle::update(float dt, const std::vector<Particle*>& nearby) {
-    position_ += velocity_ * dt;
+
+    sf::Vector2f addVelocity = velocity_ * dt;
+    position_ += addVelocity;
     if (lifetime_ == -1)
         lifetime_ -= dt;
+
+
     // Example: react to nearby particles
     for (auto* other : nearby) {
         ;
@@ -92,7 +96,7 @@ bool Particle::isAlive() const {
 
 void Particle::draw(sf::RenderWindow& window) const {
     sf::CircleShape shape(radius_);
-    shape.setPosition(position_);
+    shape.setPosition(position_+sf::Vector2f(-radius_, -radius_)); // center the shape on position
     shape.setFillColor(color_);
     window.draw(shape);
 }
@@ -100,4 +104,9 @@ void Particle::draw(sf::RenderWindow& window) const {
 sf::Vector2f Particle::getPosition() const
 {
     return position_;
+}
+
+void Particle::setPosition(const sf::Vector2f& pos)
+{
+    position_ = pos;
 }

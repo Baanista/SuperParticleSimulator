@@ -2,11 +2,15 @@
 #include <cstdlib>
 #include <cmath>
 
-ParticleSystem::ParticleSystem(unsigned int maxParticles)
+ParticleSystem::ParticleSystem(unsigned int maxParticles, sf::Vector2f size, BorderBehavior behavior)
     : maxParticles_(maxParticles),
-      gravityField_(1920.f, 1080.f, 0.5f, 100.0f) {
-        
-    }
+      gravityField_(size.x, size.y, 0.5f, 100.0f),
+      borderBehavior(behavior) {
+    
+    this->size = size;
+    
+    particles_ = std::vector<std::unique_ptr<Particle>>();
+}
 
 void ParticleSystem::emit(const sf::Vector2f& position, unsigned int count) {
     for (unsigned int i = 0; i < count && particles_.size() < maxParticles_; ++i) {
@@ -42,9 +46,12 @@ void ParticleSystem::update(float dt) {
     }
 
     // 3️⃣ Build gravity field and apply forces
-    if (!matterParticles.empty()) {
-        gravityField_.build(matterParticles);
+    if (nBodyGravity) {
+        if (!matterParticles.empty()) {
+            gravityField_.build(matterParticles);
+        }
     }
+
 
     const sf::Vector2f gravityCenter(0.f, 0.f);
     const float G = 10000.f;
@@ -53,34 +60,50 @@ void ParticleSystem::update(float dt) {
     for (auto it = particles_.begin(); it != particles_.end();) {
         auto& particle = *it;
 
-        // --- Central gravitational force toward (0, 0) ---
-        if (centerGravity){
-            sf::Vector2f pos = particle->getPosition();
-            sf::Vector2f diff = gravityCenter - pos;
-
-            float dist2 = diff.x * diff.x + diff.y * diff.y + 1e-2f; // prevent singularity
-            float dist = std::sqrt(dist2);
-
-            // Normalize direction
-            sf::Vector2f dir = diff / dist;
-
-            // Gravitational acceleration (no particle mass)
-            // a = G / r^2
-            sf::Vector2f gravityAccel = dir * (G / dist2);
-
-            // Apply acceleration directly as a force-like term
-            particle->applyForce(gravityAccel * dt);
-
-
+        particle->applyForce({0.f, downwardGravity * dt});
+        // make particles wrap around the bounds of the simulation area
+        sf::Vector2f pos = particle->getPosition();
+        if (particle->getPosition().x < 0) 
+        {
+            if (borderBehavior == WRAP)
+                pos.x += size.x;
+            else if (borderBehavior == BOUNCE)
+                particle->velocity_.x *= -1;
         }
+        else if (pos.x > size.x) 
+        {
+            if (borderBehavior == WRAP)
+                pos.x -= size.x;
+            else if (borderBehavior == BOUNCE)
+                particle->velocity_.x *= -1;
+        }
+        if (pos.y < 0) 
+        {
+            if (borderBehavior == WRAP)
+                pos.y += size.y;
+            else if (borderBehavior == BOUNCE)
+                particle->velocity_.y *= -1;
+        }
+        else if (pos.y > size.y) 
+        {
+            if (borderBehavior == WRAP)
+                pos.y -= size.y;
+            else if (borderBehavior == BOUNCE)
+                particle->velocity_.y *= -1;
+        }
+        particle->setPosition(pos);
 
         float detectionRange = particle->getDetectionRange(); // 👈 new per-particle value
         auto neighbors = grid_.queryRange(particle->getPosition(), detectionRange);
-        if (auto* matter = dynamic_cast<ParticleMatter*>(particle.get())) {
-            sf::Vector2f gravityForce = gravityField_.computeForceOn(*matter);
-            matter->applyForce(gravityForce * dt);
+        if (nBodyGravity){
+            
+            
+            if (auto* matter = dynamic_cast<ParticleMatter*>(particle.get())) {
+                sf::Vector2f gravityForce = gravityField_.computeForceOn(*matter);
+                matter->applyForce(gravityForce * dt);
+            }
         }
-        
+
         particle->update(dt, neighbors);
 
         if (!particle->isAlive())

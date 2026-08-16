@@ -25,21 +25,23 @@ void spawnOrbitalRing(ParticleSystem& system, int count, float radius, float spe
 
         // Final velocity vector
         sf::Vector2f vel = tangent * speed;
+        
 
         // Spawn orbiting particle
-        system.addParticle(std::make_unique<ParticleMatter>(pos, vel, 5.f, mass));
+        system.addParticle(std::make_unique<ParticleMatter>(pos, vel, 5.0f, mass));
 ;
     }
 }
 
 int main()
 {
-    auto window = sf::RenderWindow(sf::VideoMode({1920u, 1080u}), "Particle Simulation");
+    sf::RenderWindow window = sf::RenderWindow(sf::VideoMode({1920u, 1080u}), "Particle Simulation");
     window.setFramerateLimit(144);
 
-    ParticleSystem particles(200000);
+    ParticleSystem particles(200000, {1920.f, 1080.f}, ParticleSystem::BOUNCE);
+    particles.nBodyGravity = false;
 
-    spawnOrbitalRing(particles, 400, 350.f, 100.f, {960.0f, 540.0f}, 1.f); 
+    //spawnOrbitalRing(particles, 3000, 540.f, 0, {960.0f, 540.0f}, 1.0f); 
 
     sf::Clock clock;
 
@@ -49,6 +51,18 @@ int main()
 
     std::cout << "Particle System Initialized" << std::endl;
 
+    sf::Vector2f velocity(0, 0);
+
+    for (int x = 0; x < particles.size.x; x += particles.size.x / 100) {
+        for (int y = 0; y < particles.size.y; y += particles.size.y / 25) {
+
+            particles.addParticle(std::make_unique<ParticleMatter>(
+                sf::Vector2f(static_cast<float>(x), static_cast<float>(y)),
+                sf::Vector2f{0.f, 0.f}, 3.f, 1.f));
+        }
+    }
+
+
     while (window.isOpen())
     {
         float dt = clock.restart().asSeconds();
@@ -56,32 +70,47 @@ int main()
         {
             dt = .2;
         }
-        std::cout << dt << std::endl;
+        std::cout << "dt: " << dt << std::endl;
         // --- Event loop (SFML 3.0 style) ---
         while (const std::optional event = window.pollEvent())
         {
             if (event->is<sf::Event::Closed>())
                 window.close();
 
-                sf::Vector2f moveDir(0.f, 0.f);
-                if (const auto* keyPressed = event->getIf<sf::Event::KeyPressed>()) {
-                    switch (keyPressed->scancode) {
-                        case sf::Keyboard::Scancode::A:
-                            moveDir.x -= 1.f;
-                            break;
-                        case sf::Keyboard::Scancode::D:
-                            moveDir.x += 1.f;
-                            break;
-                        case sf::Keyboard::Scancode::W:
-                            moveDir.y -= 1.f;
+            bool moveLeft = false, moveRight = false, moveUp = false, moveDown = false;
+            
+            sf::Vector2f moveDir(0.f, 0.f);
+            if (const auto* keyPressed = event->getIf<sf::Event::KeyPressed>()) {
+                switch (keyPressed->scancode) {
+                    case sf::Keyboard::Scancode::A:      moveLeft = true;  break;
+                    case sf::Keyboard::Scancode::D:      moveRight = true; break;
+                    case sf::Keyboard::Scancode::W:      moveUp = true;    break;
+                    case sf::Keyboard::Scancode::S:      moveDown = true;  break;
 
-                            break;
-                        case sf::Keyboard::Scancode::S:
-                            moveDir.y += 1.f;
-
-                            break;
-                    }
                 }
+            }
+
+            if (const auto* keyReleased = event->getIf<sf::Event::KeyReleased>()) {
+                switch (keyReleased->scancode) {
+                    case sf::Keyboard::Scancode::A:      moveLeft = false;  break;
+                    case sf::Keyboard::Scancode::D:      moveRight = false; break;
+                    case sf::Keyboard::Scancode::W:      moveUp = false;    break;
+                    case sf::Keyboard::Scancode::S:      moveDown = false;  break;
+                    default: break;
+                }
+            }
+            const float panFactor = 1.0f;
+            float panSpeed = camera.getSize().x * panFactor * dt; 
+
+            if (moveLeft)  camera.move({-panSpeed, 0});
+            if (moveRight) camera.move({panSpeed, 0});
+            if (moveUp)    camera.move({0, -panSpeed});
+            if (moveDown)  camera.move({0, panSpeed});
+
+            if (const auto* mouseWheel = event->getIf<sf::Event::MouseWheelScrolled>()) {
+                float zoomAmount = (mouseWheel->delta > 0) ? 0.8f : 1.05f;
+                camera.zoom(zoomAmount);
+    }
 
                 if (moveDir.x != 0.f || moveDir.y != 0.f)
                     camera.move(moveDir * cameraSpeed * dt);
@@ -97,17 +126,22 @@ int main()
             float angle = static_cast<float>(rand()) / RAND_MAX * 2.f * 3.1415926f;
             float speed = 50.f + static_cast<float>(rand()) / RAND_MAX * 150.f; // range 50–200
             // sf::Vector2f velocity(-std::sin(angle) * speed, std::cos(angle) * speed);
-            sf::Vector2f velocity(0, 0);
+            sf::Vector2f velocity(0.f, 0.f);
 
-            particles.addParticle(std::make_unique<ParticleMatter>(
-                sf::Vector2f(static_cast<float>(worldPos.x), static_cast<float>(worldPos.y)),
-                velocity, 3.f, 1.f));
+            // particles.addParticle(std::make_unique<ParticleMatter>(
+            //     sf::Vector2f(static_cast<float>(worldPos.x), static_cast<float>(worldPos.y)),
+            //     velocity, 5.f, 10.f));
+
+            // particles.addParticle(std::make_unique<Particle>(
+            //     sf::Vector2f(static_cast<float>(worldPos.x), static_cast<float>(worldPos.y)),
+            //     velocity, 5.f, 10.f
+            // ));
         }
         
         
 
         // Update and draw
-        particles.update(dt);
+        particles.update(dt); // convert to milliseconds
 
         window.clear(sf::Color::Black);
         window.setView(camera);

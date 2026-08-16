@@ -16,6 +16,7 @@ ParticleMatter::ParticleMatter(
 void ParticleMatter::update(float dt, const std::vector<Particle*>& nearby) {
     // Apply motion
     position_ += velocity_ * dt;
+    velocity_ *= 0.99f; // simple damping to prevent infinite acceleration
     lifetime_ -= dt;
 
     // Handle collisions with nearby particles
@@ -28,12 +29,68 @@ void ParticleMatter::update(float dt, const std::vector<Particle*>& nearby) {
         if (!other)
             continue;
 
-        resolveCollision(other, 0.95);
-
-        // nearAddVelocity(other, -8 * dt, detectionRange_ * .3);
-        // nearAddVelocity(other, -15 * dt, detectionRange_ * .8);
-        // other->nearAddVelocity(this, -4 * dt, detectionRange_ * .6);
+        // nearAddVelocity(other, -80 * dt, detectionRange_ * .5);
+        // nearAddVelocity(other, 10 * dt, detectionRange_ );
+        // nearAddVelocity(other, 20 * dt, detectionRange_ * .8);
+        // nearAddVelocity(other, -40 * dt, detectionRange_ * .8);
         // other->nearAddVelocity(this, 7 * dt, detectionRange_ * .4);
+    }
+
+    for (Particle* p : nearby) {
+        if (p == this)
+            continue;
+
+        // Only collide with other ParticleMatter objects
+        auto* other = dynamic_cast<ParticleMatter*>(p);
+        if (!other)
+            continue;
+
+        resolveCollision(other, 1.0f);
+    }
+    applyConnectionForces(dt);
+}
+
+void ParticleMatter::addConnection(ParticleMatter* other) {
+    if (!other || other == this) return;
+
+    // Prevent duplicate entries
+    auto it = std::find(connections_.begin(), connections_.end(), other);
+    if (it == connections_.end()) {
+        connections_.push_back(other);
+        other->connections_.push_back(this); // Keep bi-directional
+    }
+}
+
+void ParticleMatter::removeConnection(ParticleMatter* other) {
+    auto it = std::find(connections_.begin(), connections_.end(), other);
+    if (it != connections_.end()) {
+        connections_.erase(it);
+    }
+}
+
+void ParticleMatter::breakAllConnections() {
+    for (ParticleMatter* other : connections_) {
+        if (other) {
+            other->removeConnection(this);
+        }
+    }
+    connections_.clear();
+}
+
+void ParticleMatter::applyConnectionForces(float dt) {
+    for (ParticleMatter* other : connections_) {
+        sf::Vector2f delta = other->getPosition() - position_;
+        float dist = std::sqrt(delta.x * delta.x + delta.y * delta.y);
+
+        if (dist > 0.0001f) {
+            sf::Vector2f dir = delta / dist;
+            float restLength = radius_ + other->radius_;
+            float displacement = dist - restLength;
+
+            // Spring force calculation (F = k * dx)
+            sf::Vector2f force = dir * (displacement * springStiffness_);
+            velocity_ += (force / mass_) * dt;
+        }
     }
 }
 
@@ -46,7 +103,7 @@ void ParticleMatter::resolveCollision(ParticleMatter* other, float collisionDamp
     // calculate the unit normal and tangential vectors
     if (distance < minDist && distance > 0.01f) {
         
-        double attractiontemp = (minDist - distance) * 0.25;
+        double attractiontemp = (minDist - distance) * 0.5;
 
         sf::Vector2f this_velocity_ = velocity_;
         circle_collision_result(distance, other->getPosition().x, other->getPosition().y, other->velocity_.x, other->velocity_.y, other->getMass(), mass_, collisionDamp);
