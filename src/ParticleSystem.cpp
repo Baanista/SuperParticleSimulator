@@ -9,7 +9,7 @@ ParticleSystem::ParticleSystem(unsigned int maxParticles, sf::Vector2f size, Bor
     
     this->size = size;
     
-    particles_ = std::vector<std::unique_ptr<Particle>>();
+    particles_ = std::vector<std::shared_ptr<Particle>>();
 }
 
 void ParticleSystem::emit(const sf::Vector2f& position, unsigned int count) {
@@ -20,13 +20,13 @@ void ParticleSystem::emit(const sf::Vector2f& position, unsigned int count) {
         float radius = static_cast<float>(rand()) / RAND_MAX * 3.f + 1.f;
         float lifetime = static_cast<float>(rand()) / RAND_MAX * 2.f + 1.f;
 
-        // 👇 You can override this call to spawn child particle types
+
         emitOne<Particle>(position, velocity, radius, lifetime);
     }
 }
 
-void ParticleSystem::addParticle(std::unique_ptr<Particle> particle) {
-    particles_.push_back(std::move(particle));
+void ParticleSystem::addParticle(std::shared_ptr<Particle> particle) {
+    particles_.push_back(particle);
 }
 
 void ParticleSystem::update(float dt) {
@@ -57,8 +57,8 @@ void ParticleSystem::update(float dt) {
     const float G = 10000.f;
 
     // 2️⃣ Update all particles
-    for (auto it = particles_.begin(); it != particles_.end();) {
-        auto& particle = *it;
+    for (size_t i = 0; i < particles_.size(); ) {
+        auto& particle = particles_[i];
 
         particle->applyForce({0.f, downwardGravity * dt});
         // make particles wrap around the bounds of the simulation area
@@ -106,11 +106,12 @@ void ParticleSystem::update(float dt) {
 
         particle->update(dt, neighbors, this);
 
-        if (!particle->isAlive())
-            it = particles_.erase(it);
-        else
-            ++it;
+        ++i;
     }
+
+    std::erase_if(particles_, [](const std::shared_ptr<Particle>& p) {
+        return !p->isAlive();
+    });
 }
 
 

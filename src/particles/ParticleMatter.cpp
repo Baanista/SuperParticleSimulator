@@ -1,6 +1,8 @@
 #include "ParticleMatter.hpp"
 #include <SFML/Graphics.hpp>
 
+
+
 ParticleMatter::ParticleMatter(
     const sf::Vector2f& position,
     const sf::Vector2f& velocity,
@@ -13,7 +15,7 @@ ParticleMatter::ParticleMatter(
     color_ = sf::Color::Yellow; // distinct color for matter particles
 }
 
-void ParticleMatter::update(float dt, const std::vector<Particle*>& nearby, ParticleSystem* particleSystem) {
+void ParticleMatter::update(float dt, const std::vector<Particle*>& nearby, ParticleSystem* system) {
     // Apply motion
     position_ += velocity_ * dt;
     //velocity_ *= 0.99f; // simple damping to prevent infinite acceleration
@@ -30,7 +32,7 @@ void ParticleMatter::update(float dt, const std::vector<Particle*>& nearby, Part
             continue;
 
         nearAddVelocity(other, -80 * dt, detectionRange_ * .5);
-        nearAddVelocity(other, 10 * dt, detectionRange_ );
+        // nearAddVelocity(other, 10 * dt, detectionRange_ );
         // nearAddVelocity(other, 20 * dt, detectionRange_ * .8);
         // nearAddVelocity(other, -40 * dt, detectionRange_ * .8);
         // other->nearAddVelocity(this, 7 * dt, detectionRange_ * .4);

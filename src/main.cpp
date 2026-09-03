@@ -3,6 +3,7 @@
 #include "ParticleSystem.hpp"
 #include "particle_types.hpp"
 
+
 void spawnOrbitalRing(ParticleSystem& system, int count, float radius, float speed, sf::Vector2f center, float mass = 1.f, float G = 1000.0f)
 {
     // Creates 'count' particles orbiting around (0, 0)
@@ -28,7 +29,7 @@ void spawnOrbitalRing(ParticleSystem& system, int count, float radius, float spe
         
 
         // Spawn orbiting particle
-        system.addParticle(std::make_unique<ParticleMatter>(pos, vel, 5.0f, mass));
+        system.addParticle(std::make_shared<ParticleMatter>(pos, vel, 5.0f, mass));
 ;
     }
 }
@@ -53,19 +54,27 @@ int main()
 
     sf::Vector2f velocity(0, 0);
 
-    for (int x = 0; x < particles.size.x; x += particles.size.x / 100) {
-        for (int y = 0; y < particles.size.y; y += particles.size.y / 25) {
+    for (float x = 0; x < particles.size.x; x += particles.size.x / 100) {
+        for (float y = 0; y < particles.size.y; y += particles.size.y / 25) {
 
-            particles.addParticle(std::make_unique<ParticleMatter>(
-                sf::Vector2f(static_cast<float>(x), static_cast<float>(y)),
-                sf::Vector2f{0.f, 0.f}, 3.f, 1.f));
+            particles.addParticle(std::make_shared<Molecule>(
+                sf::Vector2f(x, y),          // Explicit position
+                sf::Vector2f(0.f, 0.f),
+                MoleculeProperties::Water,
+                3
+            ));
         }
     }
-    particles.addParticle(std::make_unique<ParticleMatter>(
-    sf::Vector2f(static_cast<float>(100), static_cast<float>(100)),
-    sf::Vector2f{0.f, 0.f}, 3.f, 1.f));
+    // particles.addParticle(std::make_shared<ParticleMatter>(
+    // sf::Vector2f(static_cast<float>(100), static_cast<float>(100)),
+    // sf::Vector2f{0.f, 0.f}, 3.f, 1.f)
+    // );
 
-    particles.addParticle(std::make_unique<Cell> );
+    // particles.addParticle(std::make_shared<Cell>(
+    //     sf::Vector2f(200.0f, 200.0f),
+    //     sf::Vector2f{0.f, 0.f},
+    //     20.0f
+    // ));
 
     while (window.isOpen())
     {

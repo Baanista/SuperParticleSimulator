@@ -3,8 +3,6 @@
 #include <iostream>
 #include <cmath>
 
-class ParticleSystem;
-
 
 class ParticleMatter : public Particle {
 public:
@@ -16,7 +14,7 @@ public:
     )
     ;
 
-    void update(float dt, const std::vector<Particle*>& nearby, ParticleSystem* particleSystem) override;
+    void update(float dt, const std::vector<Particle*>& nearby, ParticleSystem* system) override;
     void draw(sf::RenderWindow& window) const override;
 
     float getMass() const { return mass_; }
@@ -26,6 +24,8 @@ public:
     void removeConnection(ParticleMatter* other);
     void breakAllConnections();
     const std::vector<ParticleMatter*> getAllconnections() {return connections_;};
+
+    virtual bool isAlive() {return mass_ > 0.0f; };
 
 protected:
     float mass_;

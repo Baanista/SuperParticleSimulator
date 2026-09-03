@@ -1,12 +1,14 @@
 #include "Particle.hpp"
 #include "ParticleSystem.hpp"
 
+
 Particle::Particle(const sf::Vector2f& position, const sf::Vector2f& velocity, float radius, float lifetime)
     : position_(position), velocity_(velocity), radius_(radius), lifetime_(lifetime), color_(sf::Color::White)
-{}
+{
+    hash = get_random_size_t();
+}
 
-void Particle::update(float dt, const std::vector<Particle*>& nearby, ParticleSystem* particleSystem) {
-
+void Particle::update(float dt, const std::vector<Particle*>& nearby, ParticleSystem* system) {
     sf::Vector2f addVelocity = velocity_ * dt;
     position_ += addVelocity;
     if (lifetime_ == -1)
@@ -91,7 +93,7 @@ void Particle::applyForce(const sf::Vector2f& force) {
     velocity_ += force;
 }
 
-bool Particle::isAlive() const {
+bool Particle::isAlive(){
     return lifetime_ > 0.f || lifetime_ == -1;
 }
 
@@ -110,4 +112,21 @@ sf::Vector2f Particle::getPosition() const
 void Particle::setPosition(const sf::Vector2f& pos)
 {
     position_ = pos;
+}
+
+float Particle::dist(Particle* other)
+{
+    double ox = other->position_.x;
+    double oy = other->position_.y;
+
+    double dx = position_.x - ox;
+    double dy = position_.y - oy;
+
+    return std::sqrt(dx * dx + dy * dy);
+}
+
+bool Particle::isTouching(Particle* other)
+{
+    float distRel = dist(other);
+    return (distRel <= other->radius_ + radius_);
 }
