@@ -1,12 +1,13 @@
 #pragma once
+#include "GravityField.hpp"
 #include <SFML/Graphics.hpp>
 #include <vector>
 #include <memory>
 #include "particle_types.hpp"
-
 #include "SpatialGrid.hpp"
-#include "GravityField.hpp"
 
+
+class GravityField;
 
 class ParticleSystem {
 public:
@@ -39,5 +40,6 @@ private:
     std::vector<std::unique_ptr<Particle>> particles_;
     unsigned int maxParticles_;
     SpatialGrid grid_;
-    GravityField gravityField_;
+
+    std::unique_ptr<GravityField> gravityField_;
 };

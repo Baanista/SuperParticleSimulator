@@ -4,7 +4,7 @@
 
 ParticleSystem::ParticleSystem(unsigned int maxParticles, sf::Vector2f size, BorderBehavior behavior)
     : maxParticles_(maxParticles),
-      gravityField_(size.x, size.y, 0.5f, 100.0f),
+      gravityField_(std::make_unique<GravityField>(size.x, size.y, 0.5f, 100.0f)),
       borderBehavior(behavior) {
     
     this->size = size;
@@ -32,7 +32,7 @@ void ParticleSystem::addParticle(std::unique_ptr<Particle> particle) {
 void ParticleSystem::update(float dt) {
     grid_.clear();
 
-    // 1️⃣ Insert all particles into grid
+
     for (auto& p : particles_) {
         grid_.insert(p.get(), p->getPosition());
     }
@@ -48,7 +48,7 @@ void ParticleSystem::update(float dt) {
     // 3️⃣ Build gravity field and apply forces
     if (nBodyGravity) {
         if (!matterParticles.empty()) {
-            gravityField_.build(matterParticles);
+            gravityField_->build(matterParticles);
         }
     }
 
@@ -99,12 +99,12 @@ void ParticleSystem::update(float dt) {
             
             
             if (auto* matter = dynamic_cast<ParticleMatter*>(particle.get())) {
-                sf::Vector2f gravityForce = gravityField_.computeForceOn(*matter);
+                sf::Vector2f gravityForce = gravityField_->computeForceOn(*matter);
                 matter->applyForce(gravityForce * dt);
             }
         }
 
-        particle->update(dt, neighbors);
+        particle->update(dt, neighbors, this);
 
         if (!particle->isAlive())
             it = particles_.erase(it);

@@ -13,10 +13,10 @@ ParticleMatter::ParticleMatter(
     color_ = sf::Color::Yellow; // distinct color for matter particles
 }
 
-void ParticleMatter::update(float dt, const std::vector<Particle*>& nearby) {
+void ParticleMatter::update(float dt, const std::vector<Particle*>& nearby, ParticleSystem* particleSystem) {
     // Apply motion
     position_ += velocity_ * dt;
-    velocity_ *= 0.99f; // simple damping to prevent infinite acceleration
+    //velocity_ *= 0.99f; // simple damping to prevent infinite acceleration
     lifetime_ -= dt;
 
     // Handle collisions with nearby particles
@@ -29,8 +29,8 @@ void ParticleMatter::update(float dt, const std::vector<Particle*>& nearby) {
         if (!other)
             continue;
 
-        // nearAddVelocity(other, -80 * dt, detectionRange_ * .5);
-        // nearAddVelocity(other, 10 * dt, detectionRange_ );
+        nearAddVelocity(other, -80 * dt, detectionRange_ * .5);
+        nearAddVelocity(other, 10 * dt, detectionRange_ );
         // nearAddVelocity(other, 20 * dt, detectionRange_ * .8);
         // nearAddVelocity(other, -40 * dt, detectionRange_ * .8);
         // other->nearAddVelocity(this, 7 * dt, detectionRange_ * .4);
@@ -45,7 +45,7 @@ void ParticleMatter::update(float dt, const std::vector<Particle*>& nearby) {
         if (!other)
             continue;
 
-        resolveCollision(other, 1.0f);
+        resolveCollision(other, .9f);
     }
     applyConnectionForces(dt);
 }
@@ -93,6 +93,42 @@ void ParticleMatter::applyConnectionForces(float dt) {
         }
     }
 }
+
+
+void ParticleMatter::drawLinks(sf::RenderWindow& window) const {
+    std::vector<sf::Vertex> lineVertices;
+
+    for (const ParticleMatter* other : connections_) {
+        if (other < this) continue; // Draw each connection once
+
+        sf::Vector2f posA = position_;
+        sf::Vector2f posB = other->getPosition();
+
+        sf::Vector2f delta = posB - posA;
+        float dist = std::sqrt(delta.x * delta.x + delta.y * delta.y);
+
+        // Distance-based alpha fade
+        float fadeFactor = 1.0f - (dist / maxBondDistance_);
+        auto alpha = static_cast<std::uint8_t>(std::clamp(fadeFactor, 0.0f, 1.0f) * 255.0f);
+
+        sf::Color lineCol{255, 255, 255, alpha};
+
+        // SFML 3 Vertex constructor syntax
+        lineVertices.push_back(sf::Vertex{posA, lineCol});
+        lineVertices.push_back(sf::Vertex{posB, lineCol});
+    }
+
+    if (!lineVertices.empty()) {
+        // SFML 3 window.draw call
+        window.draw(lineVertices.data(), lineVertices.size(), sf::PrimitiveType::Lines);
+    }
+}
+
+void ParticleMatter::draw(sf::RenderWindow& window) const{
+    Particle::draw(window);
+    drawLinks(window);
+}
+
 
 void ParticleMatter::resolveCollision(ParticleMatter* other, float collisionDamp) {
 

@@ -1,10 +1,11 @@
 #include "Particle.hpp"
+#include "ParticleSystem.hpp"
 
 Particle::Particle(const sf::Vector2f& position, const sf::Vector2f& velocity, float radius, float lifetime)
     : position_(position), velocity_(velocity), radius_(radius), lifetime_(lifetime), color_(sf::Color::White)
 {}
 
-void Particle::update(float dt, const std::vector<Particle*>& nearby) {
+void Particle::update(float dt, const std::vector<Particle*>& nearby, ParticleSystem* particleSystem) {
 
     sf::Vector2f addVelocity = velocity_ * dt;
     position_ += addVelocity;

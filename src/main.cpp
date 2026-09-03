@@ -61,7 +61,11 @@ int main()
                 sf::Vector2f{0.f, 0.f}, 3.f, 1.f));
         }
     }
+    particles.addParticle(std::make_unique<ParticleMatter>(
+    sf::Vector2f(static_cast<float>(100), static_cast<float>(100)),
+    sf::Vector2f{0.f, 0.f}, 3.f, 1.f));
 
+    particles.addParticle(std::make_unique<Cell> );
 
     while (window.isOpen())
     {

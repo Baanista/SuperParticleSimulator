@@ -1,12 +1,15 @@
 #pragma once
 #include <SFML/Graphics.hpp>
+#include <vector>
+
+class ParticleSystem;
 
 class Particle {
 public:
     Particle(const sf::Vector2f& position, const sf::Vector2f& velocity, float radius, float lifetime);
     virtual ~Particle() = default; // 👈 must have a virtual destructor
 
-    virtual void update(float dt, const std::vector<Particle*>& nearby);
+    virtual void update(float dt, const std::vector<Particle*>& nearby, ParticleSystem* particleSystem);
     virtual void draw(sf::RenderWindow& window) const;
     void addVelocity(Particle*, double attraction);
     void nearAddVelocity(Particle* other, double attraction, double maxDist);
