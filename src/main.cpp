@@ -2,6 +2,7 @@
 #include <iostream>
 #include "ParticleSystem.hpp"
 #include "particle_types.hpp"
+#include "senarios/primodial_soup.hpp"
 
 
 void spawnOrbitalRing(ParticleSystem& system, int count, float radius, float speed, sf::Vector2f center, float mass = 1.f, float G = 1000.0f)
@@ -54,26 +55,37 @@ int main()
 
     sf::Vector2f velocity(0, 0);
 
-    for (float x = 0; x < particles.size.x; x += particles.size.x / 100) {
-        for (float y = 0; y < particles.size.y; y += particles.size.y / 25) {
 
-            particles.addParticle(std::make_shared<Molecule>(
-                sf::Vector2f(x, y),          // Explicit position
-                sf::Vector2f(0.f, 0.f),
-                MoleculeProperties::Sugar,
-                1
-            ));
-        }
-    }
-    // particles.addParticle(std::make_shared<ParticleMatter>(
-    // sf::Vector2f(static_cast<float>(100), static_cast<float>(100)),
-    // sf::Vector2f{0.f, 0.f}, 3.f, 1.f)
-    // );
+    // primordial_soup(&particles, {
+    //     50, // Water
+    //     10, // CarbonDioxide
+    //     50,  // Carbon
+    //     20, // Oxygen
+    //     15, // Nitrogen
+    //     8,  // Sugar
+    //     4,  // Lipid
+    //     3,  // Protein
+    //     2,  // Phosphorus
+    //     1   // Phospholipid
+    // });
+
+    primordial_soup(&particles, {
+        0, // Water
+        0, // CarbonDioxide
+        0,  // Carbon
+        100 * 3, // Oxygen
+        0, // Nitrogen
+        50 * 3,  // Sugar
+        0,  // Lipid
+        0,  // Protein
+        0,  // Phosphorus
+        0   // Phospholipid
+    });
 
     particles.addParticle(std::make_shared<Cell>(
-        sf::Vector2f(200.0f, 200.0f),
+        particles.size - sf::Vector2f(200.0f, 200.0f),
         sf::Vector2f{0.f, 0.f},
-        20.0f
+        1000.0f
     ));
 
     while (window.isOpen())

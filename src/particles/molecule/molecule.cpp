@@ -1,9 +1,33 @@
 #include "molecule.hpp"
+#include "../../ParticleSystem.hpp"
 
-const MoleculeProperties MoleculeProperties::Water         = { MoleculeType::Water, 0.3f, sf::Color::Blue };
-const MoleculeProperties MoleculeProperties::CarbonDioxide = { MoleculeType::CarbonDioxide, 1.98f, sf::Color(128, 128, 128) };
-const MoleculeProperties MoleculeProperties::Oxygen        = { MoleculeType::Oxygen, 1.43f, sf::Color::Red };
-const MoleculeProperties MoleculeProperties::Sugar         = { MoleculeType::Sugar, .4f, sf::Color::White };
+const MoleculeProperties MoleculeProperties::WATER          = { MoleculeType::Water,        1.00f, sf::Color(0, 119, 182) };   // Deep Blue
+const MoleculeProperties MoleculeProperties::CARBON_DIOXIDE = { MoleculeType::CarbonDioxide, 1.98f, sf::Color(108, 117, 125) };// Dark Gray
+const MoleculeProperties MoleculeProperties::CARBON         = { MoleculeType::Carbon,        2.26f, sf::Color(33, 37, 41) };    // Charcoal
+const MoleculeProperties MoleculeProperties::OXYGEN         = { MoleculeType::Oxygen,        0.80f, sf::Color(229, 56, 59) };   // Red
+const MoleculeProperties MoleculeProperties::NITROGEN       = { MoleculeType::Nitrogen,      1.25f, sf::Color(114, 9, 183) };  // Purple
+const MoleculeProperties MoleculeProperties::SUGAR          = { MoleculeType::Sugar,         1.59f, sf::Color(255, 200, 221) }; // Soft Pink
+const MoleculeProperties MoleculeProperties::LIPID          = { MoleculeType::Lipid,         0.92f, sf::Color(255, 214, 10) };  // Yellow
+const MoleculeProperties MoleculeProperties::PROTEIN        = { MoleculeType::Protein,       1.35f, sf::Color(255, 109, 0) };   // Orange
+const MoleculeProperties MoleculeProperties::PHOSPHORUS     = { MoleculeType::Phosphorus,    1.82f, sf::Color(224, 170, 255) }; // Light Purple
+const MoleculeProperties MoleculeProperties::PHOSPHOLIPID   = { MoleculeType::Phospholipid,  1.03f, sf::Color(82, 183, 136) };  // Teal-Green
+
+const MoleculeProperties& MoleculeProperties::get(MoleculeType type) {
+    switch (type) {
+        case MoleculeType::Water:         return WATER;
+        case MoleculeType::CarbonDioxide: return CARBON_DIOXIDE;
+        case MoleculeType::Carbon:        return CARBON;
+        case MoleculeType::Oxygen:        return OXYGEN;
+        case MoleculeType::Nitrogen:      return NITROGEN;
+        case MoleculeType::Sugar:         return SUGAR;
+        case MoleculeType::Lipid:         return LIPID;
+        case MoleculeType::Protein:       return PROTEIN;
+        case MoleculeType::Phosphorus:    return PHOSPHORUS;
+        case MoleculeType::Phospholipid:  return PHOSPHOLIPID;
+        default:                          return WATER;
+    }
+};
+
 
 Molecule::Molecule(    
     const sf::Vector2f& position,
@@ -19,6 +43,10 @@ Molecule::Molecule(
 
 void Molecule::update(float dt, const std::vector<Particle*>& nearby, ParticleSystem* system)
 {
+    if (mass_ > maxMass)
+    {
+        split(system);
+    }
     for (Particle* p : nearby)
     {
         if (p == this)
@@ -64,6 +92,16 @@ void Molecule::absorb(Molecule* other) {
     resetRadius();
     other->resetRadius();
 }
+
+void Molecule::split(ParticleSystem* system){
+    mass_ *= 0.5;
+    system->addParticle(std::make_shared<Molecule>(
+        position_ + sf::Vector2f(1.0f, 0.0f),
+        velocity_,
+        properties_,
+        mass_
+    ));
+};
 
 bool Molecule::isAlive()
 {

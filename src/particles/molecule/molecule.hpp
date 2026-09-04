@@ -1,12 +1,18 @@
 #pragma once
 #include "../ParticleMatter.hpp"
 
-enum MoleculeType
+enum MoleculeType : size_t
 {
     Water,
     CarbonDioxide,
+    Carbon,
     Oxygen,
+    Nitrogen,
     Sugar,
+    Lipid,
+    Protein,
+    Phosphorus,
+    Phospholipid,
     COUNT
 };
 
@@ -16,10 +22,27 @@ struct MoleculeProperties
     float density;
     sf::Color color_;
 
-    static const MoleculeProperties Water;
-    static const MoleculeProperties CarbonDioxide;
-    static const MoleculeProperties Oxygen;
-    static const MoleculeProperties Sugar;
+    static const MoleculeProperties WATER;
+    static const MoleculeProperties CARBON_DIOXIDE;
+    static const MoleculeProperties CARBON;
+    static const MoleculeProperties OXYGEN;
+    static const MoleculeProperties NITROGEN;
+    static const MoleculeProperties SUGAR;
+    static const MoleculeProperties LIPID;
+    static const MoleculeProperties PROTEIN;
+    static const MoleculeProperties PHOSPHORUS;
+    static const MoleculeProperties PHOSPHOLIPID;
+
+    MoleculeProperties(MoleculeType t, float d, sf::Color c)
+        : type(t), density(d), color_(c) {}
+
+
+    MoleculeProperties(MoleculeType t) {
+        *this = get(t);
+    }
+
+
+    static const MoleculeProperties& get(MoleculeType type);
 };
 
 
@@ -45,6 +68,8 @@ public:
     bool isAlive() override;
 
     void absorb(Molecule* other);
+    void split(ParticleSystem* system);
+    
     static constexpr float maxMass = 10.0f;
     MoleculeProperties getProperties(){return properties_; };
     MoleculeType getMoleculeType(){return properties_.type; }
@@ -52,7 +77,7 @@ public:
 
 private:
     MoleculeProperties properties_;
-    void resetRadius(){radius_ = sqrt(mass_) / properties_.density;};
+    void resetRadius(){radius_ = sqrt(mass_) / (properties_.density * (.3));};
     
 };
 

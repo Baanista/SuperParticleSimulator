@@ -13,10 +13,15 @@ public:
         const sf::Vector2f& velocity,
         float starting_atp);
 
-    virtual ~Cell() noexcept = default;
+    virtual ~Cell() noexcept;
+
+    ParticleSystem* deathSystem;
 
     void update(float dt, const std::vector<Particle*>& nearby, ParticleSystem* system) override;
     void draw(sf::RenderWindow& window) const override;
+    bool isAlive() override;
+    void die();
+    
 
 private:
     std::shared_ptr<Cell> duplicate(ParticleSystem* system);
@@ -25,4 +30,14 @@ private:
     sf::Angle angle_;
     friend class DNA;
     std::array<float, static_cast<std::size_t>(MoleculeType::COUNT)> cytoplasm_;
+    
+    
+
+    /* 
+    cytoplasm manipilation
+    takes in the amout of mass that wants to be made 
+    returns the remaining amout that could not be converted
+    */
+    float metabolize_sugar(float amout);
+    float photosynthesize(float amount);
 };

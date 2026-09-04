@@ -110,12 +110,17 @@ void ParticleSystem::update(float dt) {
     }
 
     std::erase_if(particles_, [](const std::shared_ptr<Particle>& p) {
-        if (!p->isAlive())
-        {
-            ;
-        }
         return !p->isAlive();
     });
+
+    if (!pendingParticles_.empty()) {
+        particles_.insert(
+            particles_.end(),
+            std::make_move_iterator(pendingParticles_.begin()),
+            std::make_move_iterator(pendingParticles_.end())
+        );
+        pendingParticles_.clear();
+    }
 
     std::cout << "Particle Amount: " << particles_.size() << std::endl; 
 }

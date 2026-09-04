@@ -26,8 +26,9 @@ public:
 
     template<typename T, typename... Args>
     void emitOne(Args&&... args) {
-        if (particles_.size() < maxParticles_)
-            particles_.push_back(std::make_shared<T>(std::forward<Args>(args)...));
+        if (particles_.size() + pendingParticles_.size() < maxParticles_) {
+            pendingParticles_.push_back(std::make_shared<T>(std::forward<Args>(args)...));
+        }
     }
 
     void emit(const sf::Vector2f& position, unsigned int count);
@@ -38,6 +39,7 @@ public:
 
 private:
     std::vector<std::shared_ptr<Particle>> particles_;
+    std::vector<std::shared_ptr<Particle>> pendingParticles_;
     unsigned int maxParticles_;
     SpatialGrid grid_;
 

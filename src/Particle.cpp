@@ -128,5 +128,5 @@ float Particle::dist(Particle* other)
 bool Particle::isTouching(Particle* other)
 {
     float distRel = dist(other);
-    return (distRel <= other->radius_ + radius_);
+    return (distRel - 1 <= other->radius_ + radius_);
 }
