@@ -110,8 +110,14 @@ void ParticleSystem::update(float dt) {
     }
 
     std::erase_if(particles_, [](const std::shared_ptr<Particle>& p) {
+        if (!p->isAlive())
+        {
+            ;
+        }
         return !p->isAlive();
     });
+
+    std::cout << "Particle Amount: " << particles_.size() << std::endl; 
 }
 
 

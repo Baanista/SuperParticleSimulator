@@ -24,4 +24,5 @@ private:
     float atp_; // amount of energy
     sf::Angle angle_;
     friend class DNA;
+    std::array<float, static_cast<std::size_t>(MoleculeType::COUNT)> cytoplasm_;
 };

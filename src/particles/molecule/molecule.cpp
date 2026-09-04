@@ -3,7 +3,7 @@
 const MoleculeProperties MoleculeProperties::Water         = { MoleculeType::Water, 0.3f, sf::Color::Blue };
 const MoleculeProperties MoleculeProperties::CarbonDioxide = { MoleculeType::CarbonDioxide, 1.98f, sf::Color(128, 128, 128) };
 const MoleculeProperties MoleculeProperties::Oxygen        = { MoleculeType::Oxygen, 1.43f, sf::Color::Red };
-const MoleculeProperties MoleculeProperties::Sugar         = { MoleculeType::Sugar, 1.59f, sf::Color::White };
+const MoleculeProperties MoleculeProperties::Sugar         = { MoleculeType::Sugar, .4f, sf::Color::White };
 
 Molecule::Molecule(    
     const sf::Vector2f& position,
@@ -19,8 +19,6 @@ Molecule::Molecule(
 
 void Molecule::update(float dt, const std::vector<Particle*>& nearby, ParticleSystem* system)
 {
-    ParticleMatter::update(dt, nearby, system);
-
     for (Particle* p : nearby)
     {
         if (p == this)
@@ -31,11 +29,20 @@ void Molecule::update(float dt, const std::vector<Particle*>& nearby, ParticleSy
         if (!other)
             continue;
 
-        if (other->mass_ <= mass_ && isTouching(other) && properties_.type == other->properties_.type)
+        if (isTouching(other) && properties_.type == other->properties_.type)
         {
-            absorb(other);
+            if (other->mass_ < mass_)
+            {
+                absorb(other);
+            }
+            else{
+                other->absorb(this);
+            }
         }
+
     }
+
+    ParticleMatter::update(dt, nearby, system);
 };
 /**
  * Takes as much mass from the other particle. Can make the other particles mass to 0

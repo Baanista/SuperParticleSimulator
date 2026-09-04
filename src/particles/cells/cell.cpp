@@ -16,7 +16,7 @@ void Cell::update(float dt, const std::vector<Particle*>& nearby, ParticleSystem
     ParticleMatter::update(dt, nearby, system);
 
     // temporary way of optaining atp
-    atp_ += 1;
+    atp_ += (cytoplasm_[MoleculeType::Sugar] > 1) ? 1 : 0;
 
 
     radius_ = sqrt(atp_) * 0.3;
@@ -27,6 +27,23 @@ void Cell::update(float dt, const std::vector<Particle*>& nearby, ParticleSystem
     {
         atp_ *= .5;
        duplicate(system);
+    }
+
+    for (Particle* p : nearby) {
+        if (p == this)
+            continue;
+
+        // interactions with molecules
+        Molecule* molecule = dynamic_cast<Molecule*>(p);
+        if (molecule)
+        {
+            if (isTouching(molecule)){
+                cytoplasm_[molecule->getMoleculeType()] += molecule->getMass();
+                molecule->setMass(0);
+            }
+        }
+
+        
     }
 }
 

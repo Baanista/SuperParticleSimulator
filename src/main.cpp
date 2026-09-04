@@ -60,8 +60,8 @@ int main()
             particles.addParticle(std::make_shared<Molecule>(
                 sf::Vector2f(x, y),          // Explicit position
                 sf::Vector2f(0.f, 0.f),
-                MoleculeProperties::Water,
-                3
+                MoleculeProperties::Sugar,
+                1
             ));
         }
     }
@@ -70,11 +70,11 @@ int main()
     // sf::Vector2f{0.f, 0.f}, 3.f, 1.f)
     // );
 
-    // particles.addParticle(std::make_shared<Cell>(
-    //     sf::Vector2f(200.0f, 200.0f),
-    //     sf::Vector2f{0.f, 0.f},
-    //     20.0f
-    // ));
+    particles.addParticle(std::make_shared<Cell>(
+        sf::Vector2f(200.0f, 200.0f),
+        sf::Vector2f{0.f, 0.f},
+        20.0f
+    ));
 
     while (window.isOpen())
     {

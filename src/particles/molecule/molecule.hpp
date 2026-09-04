@@ -6,7 +6,8 @@ enum MoleculeType
     Water,
     CarbonDioxide,
     Oxygen,
-    Sugar
+    Sugar,
+    COUNT
 };
 
 struct MoleculeProperties
@@ -45,7 +46,8 @@ public:
 
     void absorb(Molecule* other);
     static constexpr float maxMass = 10.0f;
-    
+    MoleculeProperties getProperties(){return properties_; };
+    MoleculeType getMoleculeType(){return properties_.type; }
     
 
 private:
@@ -53,3 +55,8 @@ private:
     void resetRadius(){radius_ = sqrt(mass_) / properties_.density;};
     
 };
+
+template <typename T>
+constexpr std::size_t to_idx(T e) {
+    return static_cast<std::size_t>(e);
+}
