@@ -18,6 +18,7 @@ ParticleMatter::ParticleMatter(
 void ParticleMatter::update(float dt, const std::vector<Particle*>& nearby, ParticleSystem* system) {
     // Apply motion
     position_ += velocity_ * dt;
+    age_ += dt;
     //velocity_ *= 0.99f; // simple damping to prevent infinite acceleration
     lifetime_ -= dt;
 
@@ -31,7 +32,7 @@ void ParticleMatter::update(float dt, const std::vector<Particle*>& nearby, Part
         if (!other)
             continue;
 
-        nearAddVelocity(other, -10 * dt, detectionRange_ * .5);
+        nearAddVelocity(other, -4 * dt, detectionRange_ * .5);
         // nearAddVelocity(other, 10 * dt, detectionRange_ );
         // nearAddVelocity(other, 20 * dt, detectionRange_ * .8);
         // nearAddVelocity(other, -40 * dt, detectionRange_ * .8);

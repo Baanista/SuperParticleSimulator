@@ -26,7 +26,12 @@ void ParticleSystem::emit(const sf::Vector2f& position, unsigned int count) {
 }
 
 void ParticleSystem::addParticle(std::shared_ptr<Particle> particle) {
-    particles_.push_back(particle);
+    if (!particle) return;
+
+    // Check capacity against active particles plus queued additions
+    if (particles_.size() + pendingParticles_.size() < maxParticles_) {
+        pendingParticles_.push_back(particle);
+    }
 }
 
 void ParticleSystem::update(float dt) {
@@ -103,13 +108,20 @@ void ParticleSystem::update(float dt) {
                 matter->applyForce(gravityForce * dt);
             }
         }
+        particle->setPosition({std::clamp(particle->position_.x, 0.0f, size.x), std::clamp(particle->position_.y, 0.0f, size.y)});
 
         particle->update(dt, neighbors, this);
 
         ++i;
     }
 
-    std::erase_if(particles_, [](const std::shared_ptr<Particle>& p) {
+    for (auto& particle : particles_) {
+        if (!particle->isAlive()) {
+            particle->onDeath(this);
+        }
+    }
+
+    std::erase_if(particles_, [&](const std::shared_ptr<Particle>& p) {
         return !p->isAlive();
     });
 

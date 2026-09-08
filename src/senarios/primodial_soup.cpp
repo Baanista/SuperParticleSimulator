@@ -1,4 +1,5 @@
 #include "primodial_soup.hpp"
+#include <memory>
 
 void primordial_soup(
     ParticleSystem* system, 
@@ -23,11 +24,11 @@ void primordial_soup(
             sf::Vector2f randomPos(posX(gen), posY(gen));
             sf::Vector2f randomVel(vel(gen), vel(gen));
 
-            system->emitOne<Molecule>(
+            system->addParticle(std::make_shared<Molecule>(
                 randomPos,
-                randomVel,
+                sf::Vector2f{0.0f, 0.0f},
                 type
-            );
+            ));
         }
     }
 }

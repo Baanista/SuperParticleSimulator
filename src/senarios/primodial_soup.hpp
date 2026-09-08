@@ -1,6 +1,7 @@
 #pragma once
 #include <array>
 #include <random>
+#include <memory>
 #include "../ParticleSystem.hpp"
 #include "../particles/molecule/molecule.hpp"
 

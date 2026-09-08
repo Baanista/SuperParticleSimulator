@@ -4,7 +4,7 @@
 #include <vector>
 #include <memory>
 #include "SpatialGrid.hpp"
-
+#include <algorithm>
 
 
 class GravityField;
@@ -36,9 +36,10 @@ public:
     void update(float dt);
     void draw(sf::RenderWindow& window);
     bool centerGravity = false;
+    std::vector<std::shared_ptr<Particle>> particles_;
 
 private:
-    std::vector<std::shared_ptr<Particle>> particles_;
+    
     std::vector<std::shared_ptr<Particle>> pendingParticles_;
     unsigned int maxParticles_;
     SpatialGrid grid_;

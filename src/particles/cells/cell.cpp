@@ -11,19 +11,20 @@ Cell::Cell(
     color_ = sf::Color::Cyan;
     angle_ = sf::degrees(0);
     radius_ = 10.0f;
-    lifetime_ = 10000;
+    lifetime_ = 120;
+    cytoplasm_[Phospholipid] = 10;
 };
 
 Cell::~Cell() noexcept
 {
-    die();
+    ;
 };
 
-void Cell::die()
-{
-    if (!deathSystem)
+void Cell::onDeath(ParticleSystem* system) {
+
+    if (!radius_)
     {
-        return;
+        std::cout << "invalid cell" << std::endl;
     }
     radius_ = 10;
     
@@ -39,37 +40,43 @@ void Cell::die()
             sf::Vector2f newPos = position_ + offset;
 
             
-            deathSystem->emitOne<Molecule>(
+            system->addParticle(std::make_shared<Molecule>(
                 newPos,
                 velocity_,
                 type,            // molecule type
                 cytoplasm_[i] // mass of molecule
-            );
+            ));
         }
     }
-};
+}
 
 void Cell::update(float dt, const std::vector<Particle*>& nearby, ParticleSystem* system) {
-    deathSystem = system;
     ParticleMatter::update(dt, nearby, system);
+    deathSystem = system;
+    
+    if (!radius_)
+    {
+        std::cout << "invalid cell" << std::endl;
+    }
 
     // temporary way of optaining atp
-    lifetime_ --;
-    metabolize_sugar(radius_);
-
-    float photoAmout = (1 / (system->size.y - position_.y));
-    // photosynthesize(photoAmout);
-
-    atp_ -= (radius_ * radius_ * 0.001 + 0.01) * 5;
+    lifetime_ -= dt;
+    metabolize_sugar(radius_ * 0.1 * dt);
 
 
-    radius_ = sqrt(atp_) * 0.3;
+    photosynthesize(10.0f * dt);
+
+    atp_ -= (radius_ * radius_ * 0.001 + 0.01) * .1 * dt;
+    
+
+    radius_ = std::min({cytoplasm_[Phospholipid] * 5, 20.0f});
     mass_ = atp_ * .5 * 0.3;
     angle_ += sf::degrees(1);
+    // limits the amount of atp produced
+    atp_ = std::min({radius_ * radius_, atp_});
 
-    if (atp_ > 500)
+    if (cytoplasm_[Phospholipid] > 5 && age_ > 10)
     {
-        atp_ *= .5;
         duplicate(system);
     }
 
@@ -81,7 +88,8 @@ void Cell::update(float dt, const std::vector<Particle*>& nearby, ParticleSystem
         Molecule* molecule = dynamic_cast<Molecule*>(p);
         if (molecule)
         {
-            if (isTouching(molecule)){
+            if (isTouching(molecule) && molecule->getMass() > 0){
+                // float added_mass = ;
                 cytoplasm_[molecule->getMoleculeType()] += molecule->getMass();
                 molecule->setMass(0);
             }
@@ -93,31 +101,92 @@ void Cell::update(float dt, const std::vector<Particle*>& nearby, ParticleSystem
 
 std::shared_ptr<Cell> Cell::duplicate(ParticleSystem* system)
 {
-    float otherNutrientProirty = 0.5f;
+    float otherNutrientPriority = 0.5f;
 
-    sf::Vector2f new_pos = position_ + sf::Vector2f(radius_ * 2, angle_);
+    sf::Vector2f new_pos = position_ + sf::Vector2f(radius_ * 2.0f, 0.0f);
+    atp_ *= .5;
     std::shared_ptr<Cell> newCell = std::make_shared<Cell>(
         new_pos,
         velocity_,
         atp_
     );
 
-    for (int i; i < MoleculeType::COUNT; i++)
+    // 1. Split cytoplasm resources between parent and offspring
+    for (size_t i = 0; i < MoleculeType::COUNT; ++i)
     {
-        newCell->cytoplasm_[i] = cytoplasm_[i] * otherNutrientProirty;
-        cytoplasm_[i] *= 1 - otherNutrientProirty;
+        newCell->cytoplasm_[i] = cytoplasm_[i] * otherNutrientPriority;
+        cytoplasm_[i] *= (1.0f - otherNutrientPriority);
     }
     
-    system->addParticle(newCell);
+    // 2. Generate a slightly mutated color based on the parent's color
+    std::random_device rd;
+    std::mt19937 gen(rd());
+    std::uniform_int_distribution<int> delta(-20, 20); // Small tint variance
+
+    auto clampColor = [](int value) {
+        return static_cast<std::uint8_t>(std::clamp(value, 0, 255));
+    };
+
+    newCell->color_ = sf::Color(
+        clampColor(color_.r + delta(gen)),
+        clampColor(color_.g + delta(gen)),
+        clampColor(color_.b + delta(gen)),
+        color_.a
+    );
+
+    newCell->deathSystem = this->deathSystem;
+
+    // 3. Register offspring particle system
+    if (system) {
+        system->addParticle(newCell);
+    }
+    else{
+        std::cout << "system invalid" << std::endl;
+    }
+
+    if (!newCell)
+    {
+        std::cout << "new cell is invalid" << std::endl;
+    }
 
     return newCell;
 }
 
 void Cell::draw(sf::RenderWindow& window) const {
-   ParticleMatter::draw(window);
+   sf::CircleShape shape(radius_ * .9);
+    shape.setFillColor(color_);
+
+    shape.setOutlineThickness(radius_ * .1);
+    shape.setOutlineColor(sf::Color(255, 255, 255));
+
+    shape.setPosition(position_ + sf::Vector2f(-radius_, -radius_));
+
+    sf::RectangleShape angleLine({radius_ * 2, 2});
+    angleLine.setPosition(position_);
+    angleLine.rotate(angle_);
+    angleLine.setFillColor(sf::Color::Red);
+    
+
+    window.draw(shape);
+    window.draw(angleLine);
+}
+
+Cell& Cell::kill()
+{
+    lifetime_ = 0;
+    atp_ = -1000;
+    return *this;
 }
 
 bool Cell::isAlive()
 {
-    return atp_ > 0 || lifetime_ < 0;
+    bool isalive = atp_ > 0 && lifetime_ > 0;
+    if (isalive)
+    {
+        ;
+    }
+    else{
+        std::cout << "cell died" << std::endl;
+    }
+    return isalive;
 }

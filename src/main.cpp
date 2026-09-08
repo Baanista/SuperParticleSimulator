@@ -70,23 +70,30 @@ int main()
     // });
 
     primordial_soup(&particles, {
-        0, // Water
-        0, // CarbonDioxide
+        600, // Water
+        400, // CarbonDioxide
         0,  // Carbon
-        100 * 3, // Oxygen
+        0, // Oxygen
         0, // Nitrogen
-        50 * 3,  // Sugar
+        0,  // Sugar
         0,  // Lipid
         0,  // Protein
         0,  // Phosphorus
-        0   // Phospholipid
+        100   // Phospholipid
     });
 
     particles.addParticle(std::make_shared<Cell>(
-        particles.size - sf::Vector2f(200.0f, 200.0f),
+        sf::Vector2f(particles.size.x * 0.5, 200.0f),
         sf::Vector2f{0.f, 0.f},
         1000.0f
     ));
+
+    // particles.addParticle(std::make_shared<Molecule>(
+    //     particles.size - sf::Vector2f(200.0f, 200.0f),
+    //     sf::Vector2f{0.f, 0.f},
+    //     MoleculeType::Water,
+    //     10000.0f
+    // ));
 
     while (window.isOpen())
     {
@@ -111,7 +118,15 @@ int main()
                     case sf::Keyboard::Scancode::D:      moveRight = true; break;
                     case sf::Keyboard::Scancode::W:      moveUp = true;    break;
                     case sf::Keyboard::Scancode::S:      moveDown = true;  break;
-
+                    case sf::Keyboard::Scancode::B:{
+                        for (const auto& p : particles.particles_)
+                        {
+                            if (auto* cell = dynamic_cast<Cell*>(p.get()))
+                            {
+                                cell->kill();
+                            }
+                        }
+                    } break;
                 }
             }
 

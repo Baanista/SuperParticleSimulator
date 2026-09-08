@@ -1,56 +1,61 @@
 #include "../cell.hpp"
+#include "../../../ParticleSystem.hpp"
 
-float Cell::metabolize_sugar(float amount) {
-    if (amount <= 0.0f) return 0.0f;
+float Cell::convert_molecule(Cytoplasm in, Cytoplasm out, float amount, float atp_change)
+{
+    if (amount < 0.0f) return 0.0f;
 
-    // Get available resources
-    float availableSugar = cytoplasm_[MoleculeType::Sugar];
-    float availableOxygen = cytoplasm_[MoleculeType::Oxygen];
+    //to get actual usable amount that can be used
+    float printableAmount = amount;
+    for (size_t type = 0; type < MoleculeType::COUNT; type++)
+    {
+        if (in.cytoplasm_[type] != 0)
+        {
+            printableAmount = std::min({printableAmount, cytoplasm_[type] / in.cytoplasm_[type]});
+        }
+    };
 
-    // Reaction is bottlenecked by requested amount, available sugar, and available oxygen (1:1 ratio)
-    float printableAmount = std::min({amount, availableSugar, availableOxygen});
 
-    if (printableAmount <= 0.0f) {
-        return amount; // 0 mass converted, all requested amount remaining
+    if (atp_change < 0.0f)
+    {
+        float atp_needed = -atp_change * printableAmount;
+        if (atp_ < atp_needed)
+        {
+            // Scale printableAmount down to the max ATP available
+            printableAmount = atp_ / -atp_change;
+        }
     }
 
-    // 1. Consume reactants (1 part Sugar, 1 part Oxygen)
-    cytoplasm_[MoleculeType::Sugar] -= printableAmount;
-    cytoplasm_[MoleculeType::Oxygen] -= printableAmount;
+    atp_ += atp_change * printableAmount;
 
-    // 2. Produce energy (10 * amount ATP)
-    atp_ += 10.0f * printableAmount;
+    if (printableAmount < 0) return amount;
 
-    // 3. Produce byproducts (1 part CO2, 1 part Water)
-    cytoplasm_[MoleculeType::CarbonDioxide] += printableAmount;
-    cytoplasm_[MoleculeType::Water] += printableAmount;
+    for (size_t type = 0; type < MoleculeType::COUNT; type++)
+    {
+        cytoplasm_[type] -= in.cytoplasm_[type] * printableAmount;
+        cytoplasm_[type] += out.cytoplasm_[type] * printableAmount;
+    }
 
-    // Return the unreacted portion of the requested amount
     return amount - printableAmount;
+};
+
+float Cell::metabolize_sugar(float amount) {
+    return convert_molecule(
+        Cytoplasm().add(MoleculeType::Sugar).add(MoleculeType::Oxygen), 
+        Cytoplasm().add(MoleculeType::CarbonDioxide).add(MoleculeType::Water),
+        amount,
+        20.0f
+    );
 }
 
 float Cell::photosynthesize(float amount) {
-    if (amount <= 0.0f) return 0.0f;
+    float photoAmout = 1 - (position_.y / deathSystem->size.y);
+    float actual_amount = std::min(photoAmout, amount);
 
-    // 1 part CO2 + 1 part Water -> 1 part Sugar + 1 part Oxygen
-    float availableCO2 = cytoplasm_[MoleculeType::CarbonDioxide];
-    float availableWater = cytoplasm_[MoleculeType::Water];
-
-    // Bottleneck reaction by requested amount and available reactants
-    float printableAmount = std::min({amount, availableCO2, availableWater});
-
-    if (printableAmount <= 0.0f) {
-        return amount; // Cannot run reaction, return full unreacted amount
-    }
-
-    // 1. Consume Reactants & Energy
-    cytoplasm_[MoleculeType::CarbonDioxide] -= printableAmount;
-    cytoplasm_[MoleculeType::Water] -= printableAmount;
-
-    // 2. Produce Products (1:1 mass balance)
-    cytoplasm_[MoleculeType::Sugar] += printableAmount;
-    cytoplasm_[MoleculeType::Oxygen] += printableAmount;
-
-    // Return unreacted amount
-    return amount - printableAmount;
+    return amount - convert_molecule(
+        Cytoplasm().add(MoleculeType::Water).add(MoleculeType::CarbonDioxide),
+        Cytoplasm().add(MoleculeType::Sugar).add(MoleculeType::Oxygen),
+        actual_amount,
+        0
+    );
 }

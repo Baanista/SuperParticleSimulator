@@ -2,7 +2,7 @@
 #include "../../ParticleSystem.hpp"
 
 const MoleculeProperties MoleculeProperties::WATER          = { MoleculeType::Water,        1.00f, sf::Color(0, 119, 182) };   // Deep Blue
-const MoleculeProperties MoleculeProperties::CARBON_DIOXIDE = { MoleculeType::CarbonDioxide, 1.98f, sf::Color(108, 117, 125) };// Dark Gray
+const MoleculeProperties MoleculeProperties::CARBON_DIOXIDE = { MoleculeType::CarbonDioxide, .5f, sf::Color(108, 117, 125) };// Dark Gray
 const MoleculeProperties MoleculeProperties::CARBON         = { MoleculeType::Carbon,        2.26f, sf::Color(33, 37, 41) };    // Charcoal
 const MoleculeProperties MoleculeProperties::OXYGEN         = { MoleculeType::Oxygen,        0.80f, sf::Color(229, 56, 59) };   // Red
 const MoleculeProperties MoleculeProperties::NITROGEN       = { MoleculeType::Nitrogen,      1.25f, sf::Color(114, 9, 183) };  // Purple
@@ -57,13 +57,13 @@ void Molecule::update(float dt, const std::vector<Particle*>& nearby, ParticleSy
         if (!other)
             continue;
 
-        if (isTouching(other) && properties_.type == other->properties_.type)
+        if (isTouching(other) && properties_.type == other->properties_.type && mass_ > 0 && other->mass_ > 0)
         {
             if (other->mass_ < mass_)
             {
                 absorb(other);
             }
-            else{
+            if (other->mass_ > mass_){
                 other->absorb(this);
             }
         }
@@ -95,6 +95,7 @@ void Molecule::absorb(Molecule* other) {
 
 void Molecule::split(ParticleSystem* system){
     mass_ *= 0.5;
+    resetRadius();
     system->addParticle(std::make_shared<Molecule>(
         position_ + sf::Vector2f(1.0f, 0.0f),
         velocity_,

@@ -23,6 +23,7 @@ public:
     void setPosition(const sf::Vector2f& pos);
 
     virtual bool isAlive();
+    virtual void onDeath(ParticleSystem* system);
 
     float getDetectionRange() const { return detectionRange_; }
     void setDetectionRange(float range) { detectionRange_ = range; }
@@ -36,6 +37,7 @@ protected:
 
     float radius_;
     float lifetime_;
+    float age_;
     float detectionRange_ = 64.f; // default, adjustable
     sf::Color color_;
     size_t hash;

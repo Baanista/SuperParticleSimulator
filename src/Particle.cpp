@@ -9,6 +9,7 @@ Particle::Particle(const sf::Vector2f& position, const sf::Vector2f& velocity, f
 }
 
 void Particle::update(float dt, const std::vector<Particle*>& nearby, ParticleSystem* system) {
+    age_ += dt;
     sf::Vector2f addVelocity = velocity_ * dt;
     position_ += addVelocity;
     if (lifetime_ == -1)
@@ -96,6 +97,10 @@ void Particle::applyForce(const sf::Vector2f& force) {
 bool Particle::isAlive(){
     return lifetime_ > 0.f || lifetime_ == -1;
 }
+
+void Particle::onDeath(ParticleSystem* system){
+    ;
+};
 
 void Particle::draw(sf::RenderWindow& window) const {
     sf::CircleShape shape(radius_);

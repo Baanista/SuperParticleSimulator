@@ -1,7 +1,7 @@
 #pragma once
 #include "../ParticleMatter.hpp"
 #include "../molecule/molecule.hpp"
-#include "DNA.hpp"
+#include "cytoplasm.hpp"
 #include <iostream>
 #include <cmath>
 #include <memory>
@@ -14,6 +14,7 @@ public:
         float starting_atp);
 
     virtual ~Cell() noexcept;
+    void onDeath(ParticleSystem* system);
 
     ParticleSystem* deathSystem;
 
@@ -21,6 +22,8 @@ public:
     void draw(sf::RenderWindow& window) const override;
     bool isAlive() override;
     void die();
+    Cell& kill();
+    
     
 
 private:
@@ -28,16 +31,21 @@ private:
 
     float atp_; // amount of energy
     sf::Angle angle_;
-    friend class DNA;
-    std::array<float, static_cast<std::size_t>(MoleculeType::COUNT)> cytoplasm_;
+    Cytoplasm cytoplasm_;
     
     
-
+    //atp_used it the amout of atp used per amount
+    float convert_molecule(Cytoplasm in, Cytoplasm out, float amount, float atp_change);
+    
     /* 
     cytoplasm manipilation
     takes in the amout of mass that wants to be made 
     returns the remaining amout that could not be converted
     */
+    
     float metabolize_sugar(float amout);
     float photosynthesize(float amount);
+
+public: 
+    class DNA;
 };
