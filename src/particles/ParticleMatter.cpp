@@ -16,8 +16,21 @@ ParticleMatter::ParticleMatter(
 }
 
 void ParticleMatter::update(float dt, const std::vector<Particle*>& nearby, ParticleSystem* system) {
+
+    if (std::isnan(position_.x))
+    {
+        std::cout << "position_ is invalid" << std::endl; 
+    }
+    if (std::isnan(velocity_.x))
+    {
+        std::cout << "velocity is invalid" << std::endl; 
+    }
     // Apply motion
-    position_ += velocity_ * dt;
+    position_ += velocity_ * dt; // velocity is an issue
+    if (std::isnan(position_.x))
+    {
+        std::cout << "position_ is invalid" << std::endl; 
+    }
     age_ += dt;
     //velocity_ *= 0.99f; // simple damping to prevent infinite acceleration
     lifetime_ -= dt;
@@ -32,7 +45,15 @@ void ParticleMatter::update(float dt, const std::vector<Particle*>& nearby, Part
         if (!other)
             continue;
 
+        if (std::isnan(velocity_.x))
+        {
+            std::cout << "velocity is invalid" << std::endl; 
+        }
         nearAddVelocity(other, -4 * dt, detectionRange_ * .5);
+        if (std::isnan(velocity_.x))
+        {
+            std::cout << "velocity is invalid" << std::endl; 
+        }
         // nearAddVelocity(other, 10 * dt, detectionRange_ );
         // nearAddVelocity(other, 20 * dt, detectionRange_ * .8);
         // nearAddVelocity(other, -40 * dt, detectionRange_ * .8);
@@ -47,10 +68,30 @@ void ParticleMatter::update(float dt, const std::vector<Particle*>& nearby, Part
         auto* other = dynamic_cast<ParticleMatter*>(p);
         if (!other)
             continue;
-
-        resolveCollision(other, .9f);
+        if (std::isnan(velocity_.x))
+        {
+            std::cout << "velocity is invalid" << std::endl; 
+        }
+        resolveCollision(other, .9f); // issue
+        if (std::isnan(velocity_.x))
+        {
+            std::cout << "velocity is invalid" << std::endl; 
+        }
+        }
+    if (std::isnan(velocity_.x))
+    {
+        std::cout << "velocity is invalid" << std::endl; 
     }
     applyConnectionForces(dt);
+
+    if (std::isnan(position_.x))
+    {
+        std::cout << "position_ is invalid" << std::endl; 
+    }
+    if (std::isnan(velocity_.x))
+    {
+        std::cout << "velocity is invalid" << std::endl; 
+    }
 }
 
 void ParticleMatter::addConnection(ParticleMatter* other) {
@@ -140,12 +181,12 @@ void ParticleMatter::resolveCollision(ParticleMatter* other, float collisionDamp
     float minDist = radius_ + other->radius_;
 
     // calculate the unit normal and tangential vectors
-    if (distance < minDist && distance > 0.01f) {
+    if (distance < minDist && distance > 0.01f && mass_ != 0 && other->mass_) {
         
         double attractiontemp = (minDist - distance) * 0.5;
 
         sf::Vector2f this_velocity_ = velocity_;
-        circle_collision_result(distance, other->getPosition().x, other->getPosition().y, other->velocity_.x, other->velocity_.y, other->getMass(), mass_, collisionDamp);
+
         other->circle_collision_result(distance, position_.x, position_.y, this_velocity_.x, this_velocity_.y, mass_, other->getMass(), collisionDamp);
 
         move(other, attractiontemp);
@@ -188,5 +229,6 @@ void ParticleMatter::circle_collision_result(double distance, double ox, double 
 
     velocity_.x += (v1x_new - velocity_.x) * collisionDamp;
     velocity_.y += (v1y_new - velocity_.y) * collisionDamp;
+
 
 }

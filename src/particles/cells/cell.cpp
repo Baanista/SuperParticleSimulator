@@ -22,10 +22,7 @@ Cell::~Cell() noexcept
 
 void Cell::onDeath(ParticleSystem* system) {
 
-    if (!radius_)
-    {
-        std::cout << "invalid cell" << std::endl;
-    }
+
     radius_ = 10;
     
     // cell dies and emmits all of its contents from the cytoplasm
@@ -51,23 +48,25 @@ void Cell::onDeath(ParticleSystem* system) {
 }
 
 void Cell::update(float dt, const std::vector<Particle*>& nearby, ParticleSystem* system) {
-    ParticleMatter::update(dt, nearby, system);
+
+    ParticleMatter::update(dt, nearby, system); //issue here 
     deathSystem = system;
     
-    if (!radius_)
-    {
-        std::cout << "invalid cell" << std::endl;
-    }
+
 
     // temporary way of optaining atp
     lifetime_ -= dt;
+
+
     metabolize_sugar(radius_ * 0.1 * dt);
 
 
-    photosynthesize(10.0f * dt);
+
+    photosynthesize(10.0f * dt); // photosynthesize is the issue 
 
     atp_ -= (radius_ * radius_ * 0.001 + 0.01) * .1 * dt;
-    
+
+
 
     radius_ = std::min({cytoplasm_[Phospholipid] * 5, 20.0f});
     mass_ = atp_ * .5 * 0.3;
@@ -137,17 +136,7 @@ std::shared_ptr<Cell> Cell::duplicate(ParticleSystem* system)
     newCell->deathSystem = this->deathSystem;
 
     // 3. Register offspring particle system
-    if (system) {
-        system->addParticle(newCell);
-    }
-    else{
-        std::cout << "system invalid" << std::endl;
-    }
 
-    if (!newCell)
-    {
-        std::cout << "new cell is invalid" << std::endl;
-    }
 
     return newCell;
 }

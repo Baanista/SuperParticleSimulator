@@ -43,6 +43,7 @@ Molecule::Molecule(
 
 void Molecule::update(float dt, const std::vector<Particle*>& nearby, ParticleSystem* system)
 {
+    ParticleMatter::update(dt, nearby, system);
     if (mass_ > maxMass)
     {
         split(system);
@@ -70,7 +71,7 @@ void Molecule::update(float dt, const std::vector<Particle*>& nearby, ParticleSy
 
     }
 
-    ParticleMatter::update(dt, nearby, system);
+    
 };
 /**
  * Takes as much mass from the other particle. Can make the other particles mass to 0

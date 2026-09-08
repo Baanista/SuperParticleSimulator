@@ -16,6 +16,7 @@ float Cell::convert_molecule(Cytoplasm in, Cytoplasm out, float amount, float at
     };
 
 
+
     if (atp_change < 0.0f)
     {
         float atp_needed = -atp_change * printableAmount;
@@ -23,8 +24,10 @@ float Cell::convert_molecule(Cytoplasm in, Cytoplasm out, float amount, float at
         {
             // Scale printableAmount down to the max ATP available
             printableAmount = atp_ / -atp_change;
+
         }
     }
+
 
     atp_ += atp_change * printableAmount;
 
@@ -49,8 +52,10 @@ float Cell::metabolize_sugar(float amount) {
 }
 
 float Cell::photosynthesize(float amount) {
-    float photoAmout = 1 - (position_.y / deathSystem->size.y);
+    float photoAmout = 1 - (position_.y / deathSystem->size.y); // the position and velocity gets currupted
     float actual_amount = std::min(photoAmout, amount);
+
+
 
     return amount - convert_molecule(
         Cytoplasm().add(MoleculeType::Water).add(MoleculeType::CarbonDioxide),
