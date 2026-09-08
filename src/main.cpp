@@ -79,7 +79,7 @@ int main()
         0,  // Lipid
         0,  // Protein
         0,  // Phosphorus
-        100   // Phospholipid
+        300   // Phospholipid
     });
 
     particles.addParticle(std::make_shared<Cell>(

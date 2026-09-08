@@ -187,6 +187,8 @@ void ParticleMatter::resolveCollision(ParticleMatter* other, float collisionDamp
 
         sf::Vector2f this_velocity_ = velocity_;
 
+        circle_collision_result(distance, other->getPosition().x, other->getPosition().y, other->velocity_.x, other->velocity_.y, other->getMass(), mass_, collisionDamp);
+
         other->circle_collision_result(distance, position_.x, position_.y, this_velocity_.x, this_velocity_.y, mass_, other->getMass(), collisionDamp);
 
         move(other, attractiontemp);
