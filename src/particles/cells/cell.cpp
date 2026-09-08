@@ -136,7 +136,7 @@ std::shared_ptr<Cell> Cell::duplicate(ParticleSystem* system)
     newCell->deathSystem = this->deathSystem;
 
     // 3. Register offspring particle system
-
+    system->addParticle(newCell);
 
     return newCell;
 }
