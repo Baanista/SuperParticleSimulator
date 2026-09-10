@@ -11,29 +11,30 @@ public:
     Cytoplasm()
     {
         cytoplasm_.fill(0.0f);
+        space = 0.0f;
     }
 
     Cytoplasm& add(MoleculeType type, float amount) {
         cytoplasm_[type] += amount;
+        space += amount * MoleculeProperties(type).density;
         return *this;
     }
 
     Cytoplasm& add(MoleculeType type)
     {
-        cytoplasm_[type] += 1.0f;
-        return *this;
+        return add(type, 1.0f);
     }
 
     Cytoplasm& remove(MoleculeType type, float amount)
     {
         cytoplasm_[type] -= amount;
+        space -= amount * MoleculeProperties(type).density;
         return *this;
     };
 
     Cytoplasm& remove(MoleculeType type)
     {
-        cytoplasm_[type] -= 1.0f;
-        return *this;
+        return remove(type, 1.0f);
     };
 
     float& operator[](std::size_t index)
@@ -42,5 +43,6 @@ public:
     }
 
     std::array<float, static_cast<std::size_t>(MoleculeType::COUNT)> cytoplasm_;
+    float space;
     
 };

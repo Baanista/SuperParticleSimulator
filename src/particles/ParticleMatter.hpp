@@ -18,6 +18,7 @@ public:
     void draw(sf::RenderWindow& window) const override;
 
     float getMass() const { return mass_; }
+    float getMass() { return mass_; }
     void setMass(float m) { mass_ = m; }
 
     void addConnection(ParticleMatter* other);
@@ -26,9 +27,9 @@ public:
     const std::vector<ParticleMatter*> getAllconnections() {return connections_;};
 
     virtual bool isAlive() {return mass_ > 0.0f; };
-
-protected:
     float mass_;
+protected:
+    
     void resolveCollision(ParticleMatter* other, float collisionDamp);
     void circle_collision_result(double distance, double ox, double oy, double other_velocityx, double other_velocityy, double other_mass, double our_size, float collisionDamp);
 

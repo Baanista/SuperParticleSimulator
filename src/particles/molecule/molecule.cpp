@@ -58,9 +58,9 @@ void Molecule::update(float dt, const std::vector<Particle*>& nearby, ParticleSy
         if (!other)
             continue;
 
-        if (isTouching(other) && properties_.type == other->properties_.type && mass_ > 0 && other->mass_ > 0)
+        if (isTouching(other, radius_ + 5.0f) && properties_.type == other->properties_.type && mass_ > 0 && other->mass_ > 0)
         {
-            if (other->mass_ < mass_)
+            if (other->mass_ <= mass_)
             {
                 absorb(other);
             }

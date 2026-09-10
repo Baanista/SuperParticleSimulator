@@ -30,7 +30,7 @@ public:
     void applyForce(const sf::Vector2f& force);
     size_t getHash() const {return hash;};
 
-    bool isTouching(Particle* other);
+    bool isTouching(Particle* other, float delta = 0);
     float dist(Particle* other);
 
 protected:

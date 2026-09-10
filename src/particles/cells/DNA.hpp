@@ -21,6 +21,9 @@ enum class Out_Genes : std::size_t
     METABOLIZE_SUGAR,
     PHOTOSYNTHESIZE,
     ROTATE,
+    OUTRED,
+    OUTBLUE,
+    OUTGREEN,
     COUNT
 };
 
@@ -39,12 +42,21 @@ public:
     class Connection
     {
     public:
-        Connection(DNA* parentDNA, std::size_t inGene, std::size_t outGene, Limiter limiter, float a, float b, float c)
-            : parentDNA(parentDNA), inGene(inGene), outGene(outGene), limiter(limiter), a(a), b(b), c(c) {}
+        Connection(DNA *parentDNA, std::size_t inGene, std::size_t outGene, Limiter limiter, float a, float b, float c)
+        {
+            this->parentDNA = parentDNA;
+            this->inGene = std::min({parentDNA->genes.size() - 1, inGene});
+            this->outGene = std::min({parentDNA->genes.size() -1, outGene});
+            this->limiter = limiter;
+            this->a = a;
+            this->b = b;
+            this->c = c;
+        }
 
         void run()
         {
-            if (!parentDNA) return;
+            if (!parentDNA)
+                return;
 
             float addValue = a * (*parentDNA)[inGene] + b;
 
@@ -60,10 +72,13 @@ public:
             (*parentDNA)[outGene] += addValue;
         };
 
-        Connection mutate(float amount, DNA* parentDNA){
+        Connection mutate(float amount, DNA *parentDNA)
+        {
             static std::random_device rd;
             static std::mt19937 gen(rd());
             std::normal_distribution<float> normalDist(0.0f, amount);
+            std::normal_distribution<float> probDist(0.0f, 1);
+
 
             std::size_t newInGene = inGene;
             std::size_t newOutGene = outGene;
@@ -72,15 +87,18 @@ public:
             float newB = b + normalDist(gen);
             float newC = c + normalDist(gen);
 
-            if (normalDist(gen) < (amount * 0.1f)){
+            if (normalDist(gen) < (amount * 0.3f))
+            {
                 std::uniform_int_distribution<std::size_t> limiterDist(0, static_cast<std::size_t>(Limiter::COUNT) - 1);
                 newLimiter = static_cast<Limiter>(limiterDist(gen));
             };
             std::uniform_int_distribution<std::size_t> randGeneConnectionGen(0, static_cast<std::size_t>(parentDNA->connections_.size()));
-            if (normalDist(gen) < (amount * 0.5f)){
+            if (probDist(gen) < (amount * 0.5f))
+            {
                 newInGene = randGeneConnectionGen(gen);
             }
-            if (normalDist(gen) < (amount * 0.5f)){
+            if (probDist(gen) < (amount * 0.5f))
+            {
                 newInGene = randGeneConnectionGen(gen);
             }
 
@@ -88,7 +106,7 @@ public:
         }
 
     private:
-        DNA* parentDNA;
+        DNA *parentDNA;
         std::size_t inGene;
         std::size_t outGene;
         float a;
@@ -108,19 +126,27 @@ public:
 
         // Initialize CONST gene value to 1.0f
         (*this)[In_Genes::CONST] = 1.0f;
-        addConnection(In_Genes::CONST, Out_Genes::ROTATE, Limiter::NONE, 0.001f, 0.0f, 0.0f);
-        addConnection(In_Genes::CONST, Out_Genes::PHOTOSYNTHESIZE, Limiter::NONE, 0.001f, 0.0f, 0.0f);
-        addConnection(In_Genes::CONST, Out_Genes::METABOLIZE_SUGAR, Limiter::NONE, 0.001f, 0.0f, 0.0f);
+        addConnection(In_Genes::CONST, Out_Genes::ROTATE, Limiter::NONE, 0.01f, 0.0f, 0.0f);
+        addConnection(In_Genes::CONST, Out_Genes::PHOTOSYNTHESIZE, Limiter::NONE, 1.f, 0.0f, 0.0f);
+        addConnection(In_Genes::CONST, Out_Genes::METABOLIZE_SUGAR, Limiter::NONE, 1.f, 0.0f, 0.0f);
+        addConnection(In_Genes::ATP, Out_Genes::OUTRED, Limiter::NONE, 1.f, 0.0f, 0.0f);
 
+        // absorbing
+        addConnection(In_Genes::CONST, MoleculeType::CarbonDioxide, Limiter::NONE, 50.f, 0.0f, 0.0f);
+        addConnection(In_Genes::CONST, MoleculeType::Water, Limiter::NONE, 50.f, 0.0f, 0.0f);
+        addConnection(In_Genes::CONST, MoleculeType::Phospholipid, Limiter::NONE, 14.f, 0.0f, 0.0f);
     }
 
-    DNA(){
+    DNA()
+    {
+
         genes.resize(total_sizemin);
         // connections_.resize(0);
         for (auto &gene : genes)
         {
             gene = 0.0f;
         }
+        
     }
 
     std::shared_ptr<DNA> mutate(float amount)
@@ -138,22 +164,33 @@ public:
         static std::mt19937 gen(rd());
         std::uniform_real_distribution<float> probDist(0.0f, 1.0f);
 
-        // Chance to add a new random connection
+        // adds new gene hidden layer
         if (probDist(gen) < amount * 0.3f)
         {
-            std::uniform_int_distribution<std::size_t> inDist(0, static_cast<std::size_t>(In_Genes::COUNT) - 1);
-            std::uniform_int_distribution<std::size_t> outDist(0, static_cast<std::size_t>(Out_Genes::COUNT) - 1);
+            outDNA->genes.push_back(0.0f);
+        }
+
+        // removes new gene hidden layer
+        if (probDist(gen) < amount * 0.3f && outDNA->genes.size() > total_sizemin)
+        {
+            outDNA->genes.pop_back();
+        }
+
+        // Chance to add a new random connection
+        if (probDist(gen) < amount * 0.5f)
+        {
+            std::uniform_int_distribution<std::size_t> randGeneConnectionGen(0, static_cast<std::size_t>(outDNA->connections_.size()));
+
             std::uniform_int_distribution<std::size_t> limiterDist(0, static_cast<std::size_t>(Limiter::COUNT) - 1);
             std::normal_distribution<float> weightDist(0.0f, 1.0f);
 
             outDNA->addConnection(
-                static_cast<In_Genes>(inDist(gen)),
-                static_cast<Out_Genes>(outDist(gen)),
+                static_cast<size_t>(randGeneConnectionGen(gen)),
+                static_cast<size_t>(randGeneConnectionGen(gen)),
                 static_cast<Limiter>(limiterDist(gen)),
                 weightDist(gen),
                 weightDist(gen),
-                weightDist(gen)
-            );
+                weightDist(gen));
         }
 
         // Chance to remove a random connection if we have redundant ones
@@ -169,10 +206,12 @@ public:
     void run()
     {
         (*this)[In_Genes::CONST] = 1.0f;
-        for (auto connections : connections_)
+        for (auto connection : connections_)
         {
-            connections.run();
+            (*this)[In_Genes::CONST] = 1.0f;
+            connection.run();
         }
+        // (*this)[MoleculeType::Phospholipid] = 14;
     };
 
     // Indexing Operators
@@ -203,18 +242,26 @@ public:
         return index;
     };
 
-    template <typename T>
-    static inline std::size_t convertToIndex(T index)
+    // for the input for cytoplasm
+    static inline std::size_t convertCytoplasmToIndex(MoleculeType type)
     {
-        return static_cast<std::size_t>(index);
-    }
-
-    template <typename T>
-    float& getCytoplasmGene(T type) {
         const std::size_t shiftAmount = static_cast<std::size_t>(In_Genes::COUNT) + static_cast<std::size_t>(Out_Genes::COUNT) + static_cast<std::size_t>(MoleculeType::COUNT);
-        return genes[shiftAmount + static_cast<std::size_t>(type)];
+        return shiftAmount + static_cast<std::size_t>(type);
+    };
+
+    static inline std::size_t convertCytoplasmToIndex(std::size_t type)
+    {
+        return convertCytoplasmToIndex(static_cast<std::size_t>(type));
+    };
+    // for the input for cytoplasm
+    template <typename T>
+    float &getCytoplasmGene(T type)
+    {
+
+        return genes[convertCytoplasmToIndex(type)];
     }
 
+    // for the input for cytoplasm
     template <typename T>
     void setCytoplasmValue(T type, float value)
     {
@@ -245,21 +292,22 @@ public:
     template <typename T, typename U>
     void addConnection(T first, U other, Limiter limiter = Limiter::NONE, float a = 1.0f, float b = 0.0f, float c = 0.0f)
     {
+        std::size_t first_connection = convertToIndex(first);
+        std::size_t other_connection = convertToIndex(other);
         connections_.emplace_back(
-            this, 
-            static_cast<std::size_t>(convertToIndex(first)), 
-            static_cast<std::size_t>(convertToIndex(other)), 
-            limiter, 
-            a, 
-            b, 
-            c
-        ); 
+            this,
+            first_connection,
+            other_connection,
+            limiter,
+            a,
+            b,
+            c);
     }
 
 private:
     std::vector<Connection> connections_;
     std::vector<float> genes;
-    static inline std::size_t total_sizemin = 
+    static inline std::size_t total_sizemin =
         static_cast<std::size_t>(In_Genes::COUNT) +
         static_cast<std::size_t>(Out_Genes::COUNT) +
         static_cast<std::size_t>(MoleculeType::COUNT) * 2;

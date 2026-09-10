@@ -26,7 +26,7 @@ void primordial_soup(
 
             system->addParticle(std::make_shared<Molecule>(
                 randomPos,
-                sf::Vector2f{0.0f, 0.0f},
+                randomVel,
                 type
             ));
         }

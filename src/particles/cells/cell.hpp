@@ -8,9 +8,7 @@
 #include <memory>
 
 class Cell : public ParticleMatter {
-public: 
-
-
+public:
     Cell(
         const sf::Vector2f& position,
         const sf::Vector2f& velocity,
@@ -25,18 +23,20 @@ public:
     void draw(sf::RenderWindow& window) const override;
     bool isAlive() override;
     void die();
-    Cell& kill();
 
-    Cell& drop(MoleculeType type, float amout);
+    Cell& kill();
+    Cell& drop(ParticleSystem* system, MoleculeType type, float amount);
+    Cell& absorb(Molecule* molecule, MoleculeType type, float amount);
     
 
 private:
+    sf::Color outerColor;
     std::shared_ptr<Cell> duplicate(ParticleSystem* system);
 
     float atp_; // amount of energy
     sf::Angle angle_;
     
-    
+    float getSpaceAmount() {return radius_ * radius_;};
     Cytoplasm cytoplasm_;
 
     // reseted every tick. Postivie values means the molocles that are wanted to absorbe. Negative is the amout that is wanted to drop

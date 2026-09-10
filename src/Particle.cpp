@@ -130,8 +130,10 @@ float Particle::dist(Particle* other)
     return std::sqrt(dx * dx + dy * dy);
 }
 
-bool Particle::isTouching(Particle* other)
+
+
+bool Particle::isTouching(Particle* other, float delta)
 {
     float distRel = dist(other);
-    return (distRel - 1 <= other->radius_ + radius_);
+    return (distRel - 1 <= other->radius_ + radius_ + delta);
 }

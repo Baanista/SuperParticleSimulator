@@ -3,7 +3,7 @@
 
 float Cell::convert_molecule(Cytoplasm in, Cytoplasm out, float amount, float atp_change)
 {
-    if (amount < 0.0f) return 0.0f;
+    if (amount <= 0.0f) return 0.0f;
 
     //to get actual usable amount that can be used
     float printableAmount = amount;
@@ -43,23 +43,28 @@ float Cell::convert_molecule(Cytoplasm in, Cytoplasm out, float amount, float at
 };
 
 float Cell::metabolize_sugar(float amount) {
+    if (amount <= 0.0f) return 0.0f;
+    float metabolizeLimiter = radius_ * .1;
+    float metabolizeAmount = std::min(metabolizeLimiter , amount);
+
     return convert_molecule(
-        Cytoplasm().add(MoleculeType::Sugar).add(MoleculeType::Oxygen), 
-        Cytoplasm().add(MoleculeType::CarbonDioxide).add(MoleculeType::Water),
-        amount,
+        Cytoplasm().add(MoleculeType::Sugar).add(MoleculeType::Oxygen, 2), 
+        Cytoplasm().add(MoleculeType::CarbonDioxide, 2).add(MoleculeType::Water),
+        metabolizeAmount,
         20.0f
     );
 }
 
 float Cell::photosynthesize(float amount) {
-    float photoAmout = 1 - (position_.y / deathSystem->size.y); // the position and velocity gets currupted
+    if (amount <= 0.0f) return 0.0f;
+    float photoAmout = 1 - (position_.y / deathSystem->size.y);
     float actual_amount = std::min(photoAmout, amount);
 
 
 
     return amount - convert_molecule(
-        Cytoplasm().add(MoleculeType::Water).add(MoleculeType::CarbonDioxide),
-        Cytoplasm().add(MoleculeType::Sugar).add(MoleculeType::Oxygen),
+        Cytoplasm().add(MoleculeType::Water).add(MoleculeType::CarbonDioxide, 2),
+        Cytoplasm().add(MoleculeType::Sugar).add(MoleculeType::Oxygen, 2),
         actual_amount,
         0
     );

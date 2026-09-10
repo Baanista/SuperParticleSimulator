@@ -40,7 +40,7 @@ int main()
     sf::RenderWindow window = sf::RenderWindow(sf::VideoMode({1920u, 1080u}), "Particle Simulation");
     window.setFramerateLimit(144);
 
-    ParticleSystem particles(200000, {4000.f, 2000.f}, ParticleSystem::BOUNCE);
+    ParticleSystem particles(200000, {12000.f, 12000.f}, ParticleSystem::BOUNCE);
     particles.nBodyGravity = false;
 
     //spawnOrbitalRing(particles, 3000, 540.f, 0, {960.0f, 540.0f}, 1.0f); 
@@ -70,8 +70,8 @@ int main()
     // });
 
     primordial_soup(&particles, {
-        600, // Water
-        400, // CarbonDioxide
+        2400, // Water
+        1600, // CarbonDioxide
         0,  // Carbon
         0, // Oxygen
         0, // Nitrogen
@@ -79,13 +79,13 @@ int main()
         0,  // Lipid
         0,  // Protein
         0,  // Phosphorus
-        400   // Phospholipid
+        800   // Phospholipid
     });
 
     particles.addParticle(std::make_shared<Cell>(
-        sf::Vector2f(particles.size.x * 0.5, 200.0f),
+        sf::Vector2f(particles.size.x * 0.5, particles.size.y * 0.5),
         sf::Vector2f{0.f, 0.f},
-        1000.0f
+        10.0f
     ));
 
     // particles.addParticle(std::make_shared<Molecule>(

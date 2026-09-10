@@ -45,19 +45,11 @@ void ParticleMatter::update(float dt, const std::vector<Particle*>& nearby, Part
         if (!other)
             continue;
 
-        if (std::isnan(velocity_.x))
-        {
-            std::cout << "velocity is invalid" << std::endl; 
-        }
-        nearAddVelocity(other, -4 * dt, detectionRange_ * .5);
-        if (std::isnan(velocity_.x))
-        {
-            std::cout << "velocity is invalid" << std::endl; 
-        }
-        nearAddVelocity(other, -20 * dt, detectionRange_ );
+
+        nearAddVelocity(other, -1 * dt * mass_, detectionRange_ );
         // nearAddVelocity(other, 20 * dt, detectionRange_ * .8);
         // nearAddVelocity(other, -40 * dt, detectionRange_ * .8);
-        other->nearAddVelocity(this, -20 * dt, detectionRange_);
+        other->nearAddVelocity(this, -1 * dt * other->mass_, detectionRange_);
     }
 
     for (Particle* p : nearby) {

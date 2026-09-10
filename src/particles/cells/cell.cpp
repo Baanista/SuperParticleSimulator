@@ -9,14 +9,15 @@ Cell::Cell(
       cytoplasm_(),
       managecytoplasm_()
 {
+    outerColor = sf::Color::White;
     dna_ = std::make_shared<DNA>(0);
     atp_ = starting_atp;
     color_ = sf::Color::Cyan;
     angle_ = sf::degrees(0);
     radius_ = 10.0f;
     lifetime_ = 120;
-    mutationAmount = .1;
-    cytoplasm_[Phospholipid] = 10;
+    mutationAmount = .01f;
+    cytoplasm_.add(Phospholipid, 10).add(CarbonDioxide, 10).add(Water, 10);
 };
 
 Cell::~Cell() noexcept
@@ -79,26 +80,69 @@ void Cell::update(float dt, const std::vector<Particle*>& nearby, ParticleSystem
         duplicate(system);
     }
 
+    float cytoplasmSpace = getSpaceAmount();
     for (Particle* p : nearby) {
         if (p == this)
             continue;
 
         // interactions with molecules
         Molecule* molecule = dynamic_cast<Molecule*>(p);
+        
+
         if (molecule)
         {
-            if (isTouching(molecule) && molecule->getMass() > 0){
-                // float added_mass = ;
-                cytoplasm_[molecule->getMoleculeType()] += molecule->getMass();
-                molecule->setMass(0);
+            if (isTouching(molecule, radius_ * 2) && molecule->getMass() > 0){
+                if (managecytoplasm_[molecule->getMoleculeType()] > 0.0f){
+                    absorb(molecule, molecule->getMoleculeType(), managecytoplasm_[molecule->getMoleculeType()]);
+                }
             }
         }
+    }
 
-        
+    for (size_t i = 0; i < MoleculeType::COUNT; i++)
+    {
+        if (managecytoplasm_[i] < - mass_ * 0.3)
+        {
+            auto type = static_cast<MoleculeType>(i);
+            drop(system ,type, std::abs(managecytoplasm_[type]));
+        }
     }
 }
 
+Cell& Cell::drop(ParticleSystem* system, MoleculeType type, float amount){
+    float aviableDropAmount = cytoplasm_[type];
+    float dropAmount = std::min({amount, aviableDropAmount});
+
+    sf::Vector2f offset(radius_ * 2, angle_ + sf::degrees(180));
+    sf::Vector2f newPos = position_ + offset;
+    
+    system->addParticle(std::make_shared<Molecule>(
+        newPos,
+        velocity_,
+        type,            // molecule type
+        dropAmount // mass of molecule
+    ));
+
+    cytoplasm_.remove(type, dropAmount);
+
+    return *this;
+}
+
+Cell& Cell::absorb(Molecule* molecule, MoleculeType type, float amount){
+    if (molecule->getProperties().type != type) {return *this;};
+    float cytoplasmSpace = getSpaceAmount();
+    float leftSpaceMass = (cytoplasmSpace - cytoplasm_.space) / molecule->getProperties().density;
+    float absorbAmount = std::min({amount, molecule->mass_, leftSpaceMass});
+    cytoplasm_.add(type, absorbAmount);
+    molecule->mass_ -= absorbAmount;
+    managecytoplasm_.remove(type, absorbAmount);
+    return *this;
+}
+
+
+
 Cell& Cell::setInputGenes(){
+    
     dna_->setValue(In_Genes::RADIUS, radius_);
     dna_->setValue(In_Genes::ATP,    atp_);
     float geneangle = angle_.asRadians();
@@ -107,24 +151,34 @@ Cell& Cell::setInputGenes(){
 };
 
 Cell& Cell::setCytoplasmInput(){
-    for (size_t type = 0; type < MoleculeType::COUNT; type++){
+    for (size_t i = 0; i < MoleculeType::COUNT; i++){
+        MoleculeType type = static_cast<MoleculeType>(i);
         dna_->setCytoplasmValue(type, cytoplasm_[type]);
     }
     return (*this);
 };
 
 Cell& Cell::useOutputGenes(){
+    auto clampColor = [](int value) {
+        return static_cast<std::uint8_t>(std::clamp(value, 0, 255));
+    };
+    atp_ -= std::abs((*dna_)[Out_Genes::ROTATE] * 0.05);
     angle_ += sf::radians(dna_->resetValue(Out_Genes::ROTATE));
     photosynthesize(dna_->resetValue(Out_Genes::PHOTOSYNTHESIZE));
     metabolize_sugar(dna_->resetValue(Out_Genes::METABOLIZE_SUGAR));
+
+    outerColor.r = clampColor(dna_->resetValue(Out_Genes::OUTRED));
+    outerColor.b = clampColor(dna_->resetValue(Out_Genes::OUTBLUE));
+    outerColor.g = clampColor(dna_->resetValue(Out_Genes::OUTGREEN));
+
     return (*this);
 };
 
 Cell& Cell::manageCytoplasm() {
     for (size_t type = 0; type < MoleculeType::COUNT; type++) {
-        float geneVal = dna_->getCytoplasmGene(type);
+        float geneVal = dna_->getGene(static_cast<MoleculeType>(type));
         managecytoplasm_[type] = geneVal;
-        dna_->setCytoplasmValue(type, 0.0f);
+        dna_->setValue(static_cast<MoleculeType>(type), 0.0f);
     }
     return *this;
 }
@@ -140,6 +194,8 @@ std::shared_ptr<Cell> Cell::duplicate(ParticleSystem* system)
         velocity_,
         atp_
     );
+    
+    newCell->angle_ = angle_;
 
     // 1. Split cytoplasm resources between parent and offspring
     for (size_t i = 0; i < MoleculeType::COUNT; ++i)
@@ -151,16 +207,17 @@ std::shared_ptr<Cell> Cell::duplicate(ParticleSystem* system)
     // 2. Generate a slightly mutated color based on the parent's color
     std::random_device rd;
     std::mt19937 gen(rd());
-    std::normal_distribution<float> delta(0, mutationAmount * 10); // Small tint variance
+    std::normal_distribution<float> delta(0, mutationAmount * 200); // Small tint variance
 
     auto clampColor = [](int value) {
         return static_cast<std::uint8_t>(std::clamp(value, 0, 255));
     };
 
+    int colorChangeAmount = static_cast<int>(delta(gen));
     newCell->color_ = sf::Color(
-        clampColor(color_.r + static_cast<int>(delta(gen))),
-        clampColor(color_.g + static_cast<int>(delta(gen))),
-        clampColor(color_.b + static_cast<int>(delta(gen))),
+        clampColor(color_.r + static_cast<int>(delta(gen) + .5)),
+        clampColor(color_.g + static_cast<int>(delta(gen) + .5)),
+        clampColor(color_.b + static_cast<int>(delta(gen) + .5)),
         color_.a
     );
 
@@ -176,11 +233,12 @@ std::shared_ptr<Cell> Cell::duplicate(ParticleSystem* system)
 }
 
 void Cell::draw(sf::RenderWindow& window) const {
-   sf::CircleShape shape(radius_ * .9);
+    sf::CircleShape shapeLabel(radius_ + 1); shapeLabel.setFillColor(sf::Color::White); shapeLabel.setPosition(position_ + sf::Vector2f(-radius_ - 3, -radius_ - 3));
+    sf::CircleShape shape(radius_ * .9);
     shape.setFillColor(color_);
 
     shape.setOutlineThickness(radius_ * .1);
-    shape.setOutlineColor(sf::Color(255, 255, 255));
+    shape.setOutlineColor(outerColor);
 
     shape.setPosition(position_ + sf::Vector2f(-radius_, -radius_));
 
@@ -189,7 +247,7 @@ void Cell::draw(sf::RenderWindow& window) const {
     angleLine.rotate(angle_);
     angleLine.setFillColor(sf::Color::Red);
     
-
+    // window.draw(shapeLabel);
     window.draw(shape);
     window.draw(angleLine);
 }
@@ -204,12 +262,5 @@ Cell& Cell::kill()
 bool Cell::isAlive()
 {
     bool isalive = atp_ > 0 && lifetime_ > 0;
-    if (isalive)
-    {
-        ;
-    }
-    else{
-        std::cout << "cell died" << std::endl;
-    }
     return isalive;
 }
