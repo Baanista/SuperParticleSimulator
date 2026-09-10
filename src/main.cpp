@@ -40,7 +40,7 @@ int main()
     sf::RenderWindow window = sf::RenderWindow(sf::VideoMode({1920u, 1080u}), "Particle Simulation");
     window.setFramerateLimit(144);
 
-    ParticleSystem particles(200000, {1920.f, 1080.f}, ParticleSystem::BOUNCE);
+    ParticleSystem particles(200000, {4000.f, 2000.f}, ParticleSystem::BOUNCE);
     particles.nBodyGravity = false;
 
     //spawnOrbitalRing(particles, 3000, 540.f, 0, {960.0f, 540.0f}, 1.0f); 
@@ -79,7 +79,7 @@ int main()
         0,  // Lipid
         0,  // Protein
         0,  // Phosphorus
-        300   // Phospholipid
+        400   // Phospholipid
     });
 
     particles.addParticle(std::make_shared<Cell>(

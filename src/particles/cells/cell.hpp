@@ -2,12 +2,15 @@
 #include "../ParticleMatter.hpp"
 #include "../molecule/molecule.hpp"
 #include "cytoplasm.hpp"
+#include "DNA.hpp"
 #include <iostream>
 #include <cmath>
 #include <memory>
 
 class Cell : public ParticleMatter {
-public:
+public: 
+
+
     Cell(
         const sf::Vector2f& position,
         const sf::Vector2f& velocity,
@@ -23,7 +26,8 @@ public:
     bool isAlive() override;
     void die();
     Cell& kill();
-    
+
+    Cell& drop(MoleculeType type, float amout);
     
 
 private:
@@ -31,8 +35,20 @@ private:
 
     float atp_; // amount of energy
     sf::Angle angle_;
-    Cytoplasm cytoplasm_;
     
+    
+    Cytoplasm cytoplasm_;
+
+    // reseted every tick. Postivie values means the molocles that are wanted to absorbe. Negative is the amout that is wanted to drop
+    Cytoplasm managecytoplasm_;
+
+    // gene use
+    std::shared_ptr<DNA> dna_;
+    Cell& setInputGenes();
+    Cell& setCytoplasmInput();
+    Cell& useOutputGenes();
+    Cell& manageCytoplasm();
+    float mutationAmount;
     
     //atp_used it the amout of atp used per amount
     float convert_molecule(Cytoplasm in, Cytoplasm out, float amount, float atp_change);
@@ -45,7 +61,5 @@ private:
     
     float metabolize_sugar(float amout);
     float photosynthesize(float amount);
-
-public: 
-    class DNA;
+    
 };

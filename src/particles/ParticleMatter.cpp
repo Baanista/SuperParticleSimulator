@@ -54,10 +54,10 @@ void ParticleMatter::update(float dt, const std::vector<Particle*>& nearby, Part
         {
             std::cout << "velocity is invalid" << std::endl; 
         }
-        // nearAddVelocity(other, 10 * dt, detectionRange_ );
+        nearAddVelocity(other, -20 * dt, detectionRange_ );
         // nearAddVelocity(other, 20 * dt, detectionRange_ * .8);
         // nearAddVelocity(other, -40 * dt, detectionRange_ * .8);
-        // other->nearAddVelocity(this, 7 * dt, detectionRange_ * .4);
+        other->nearAddVelocity(this, -20 * dt, detectionRange_);
     }
 
     for (Particle* p : nearby) {
@@ -68,30 +68,15 @@ void ParticleMatter::update(float dt, const std::vector<Particle*>& nearby, Part
         auto* other = dynamic_cast<ParticleMatter*>(p);
         if (!other)
             continue;
-        if (std::isnan(velocity_.x))
-        {
-            std::cout << "velocity is invalid" << std::endl; 
-        }
+
         resolveCollision(other, .9f); // issue
-        if (std::isnan(velocity_.x))
-        {
-            std::cout << "velocity is invalid" << std::endl; 
-        }
-        }
-    if (std::isnan(velocity_.x))
-    {
-        std::cout << "velocity is invalid" << std::endl; 
+        other->resolveCollision(this, .9f);
+
     }
+
     applyConnectionForces(dt);
 
-    if (std::isnan(position_.x))
-    {
-        std::cout << "position_ is invalid" << std::endl; 
-    }
-    if (std::isnan(velocity_.x))
-    {
-        std::cout << "velocity is invalid" << std::endl; 
-    }
+
 }
 
 void ParticleMatter::addConnection(ParticleMatter* other) {
