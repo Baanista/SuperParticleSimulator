@@ -1,0 +1,25 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+        "name": "Debug Main",
+        "type": "lldb",
+        "request": "launch",
+        "program": "${workspaceFolder}/build/bin/main",
+        "args": [],
+        "cwd": "${workspaceFolder}",
+        "environment": [
+            {
+                "name": "OS_ACTIVITY_MODE",
+                "value": "disable"
+            }
+        ],
+        "externalConsole": true,
+        "MIMode": "lldb",
+        "preLaunchTask": "build-cmake",
+        "initCommands": [
+            "settings set target.disable-aslr false" 
+        ]
+        }
+    ]
+}
