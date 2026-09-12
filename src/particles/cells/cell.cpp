@@ -135,7 +135,10 @@ Cell& Cell::drop(ParticleSystem* system, MoleculeType type, float amount){
 }
 
 Cell& Cell::dropExtraCytoplasm(ParticleSystem* system){
-    // float extraSpace = ; 
+    float extraSpace = cytoplasm_.space - getSpaceAmount(); 
+    if (extraSpace <= 0.0f){
+        return *this;
+    }
 
     return *this;
 }
@@ -201,9 +204,9 @@ Cell& Cell::manageCytoplasm() {
     return *this;
 }
 
-void Cell::consume(Cell* other){
-    // for ()
-}
+// void Cell::consume(Cell* other){
+//     // for ()
+// }
 
 std::shared_ptr<Cell> Cell::duplicate(ParticleSystem* system)
 {
