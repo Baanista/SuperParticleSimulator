@@ -13,6 +13,8 @@ enum class In_Genes : std::size_t
     ATP,
     RADIUS,
     ANGLE,
+    LIFETIME,
+    AGE,
     COUNT
 };
 
@@ -24,6 +26,7 @@ enum class Out_Genes : std::size_t
     OUTRED,
     OUTBLUE,
     OUTGREEN,
+    DUPLICATE,
     COUNT
 };
 
@@ -130,11 +133,15 @@ public:
         addConnection(In_Genes::CONST, Out_Genes::PHOTOSYNTHESIZE, Limiter::NONE, 1.f, 0.0f, 0.0f);
         addConnection(In_Genes::CONST, Out_Genes::METABOLIZE_SUGAR, Limiter::NONE, 1.f, 0.0f, 0.0f);
         addConnection(In_Genes::ATP, Out_Genes::OUTRED, Limiter::NONE, 1.f, 0.0f, 0.0f);
+        addConnection(In_Genes::AGE, Out_Genes::OUTBLUE, Limiter::NONE, 1.f, 0.0f, 0.0f);
+
+
+        addConnection(In_Genes::RADIUS, Out_Genes::DUPLICATE, Limiter::NONE, 10.0f, -250.f, 0.0f);
 
         // absorbing
-        addConnection(In_Genes::CONST, MoleculeType::CarbonDioxide, Limiter::NONE, 50.f, 0.0f, 0.0f);
-        addConnection(In_Genes::CONST, MoleculeType::Water, Limiter::NONE, 50.f, 0.0f, 0.0f);
-        addConnection(In_Genes::CONST, MoleculeType::Phospholipid, Limiter::NONE, 14.f, 0.0f, 0.0f);
+        addConnection(In_Genes::CONST, MoleculeType::CarbonDioxide, Limiter::NONE, 10.f, 0.0f, 0.0f);
+        addConnection(In_Genes::CONST, MoleculeType::Water, Limiter::NONE, 10.f, 0.0f, 0.0f);
+        addConnection(In_Genes::CONST, MoleculeType::Phospholipid, Limiter::NONE, 10.f, 0.0f, 0.0f);
     }
 
     DNA()
@@ -171,7 +178,7 @@ public:
         }
 
         // removes new gene hidden layer
-        if (probDist(gen) < amount * 0.3f && outDNA->genes.size() > total_sizemin)
+        if (probDist(gen) < amount * 0.1f && outDNA->genes.size() > total_sizemin)
         {
             outDNA->genes.pop_back();
         }
@@ -179,7 +186,7 @@ public:
         // Chance to add a new random connection
         if (probDist(gen) < amount * 0.5f)
         {
-            std::uniform_int_distribution<std::size_t> randGeneConnectionGen(0, static_cast<std::size_t>(outDNA->connections_.size()));
+            std::uniform_int_distribution<std::size_t> randGeneConnectionGen(0, static_cast<std::size_t>(outDNA->genes.size()));
 
             std::uniform_int_distribution<std::size_t> limiterDist(0, static_cast<std::size_t>(Limiter::COUNT) - 1);
             std::normal_distribution<float> weightDist(0.0f, 1.0f);
@@ -191,6 +198,13 @@ public:
                 weightDist(gen),
                 weightDist(gen),
                 weightDist(gen));
+        }
+
+        if (probDist(gen) < amount * 0.6f)
+        {
+            std::uniform_int_distribution<std::size_t> randConnectionGen(0, static_cast<std::size_t>(outDNA->connections_.size()));
+
+            outDNA->connections_.push_back(connections_[randConnectionGen(gen)].mutate(amount, outDNA.get()));
         }
 
         // Chance to remove a random connection if we have redundant ones

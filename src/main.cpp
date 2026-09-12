@@ -48,6 +48,7 @@ int main()
     sf::Clock clock;
 
     sf::View camera(sf::Rect<float>({0.f, 0.f}, {1920u, 1080u}));
+    camera.setCenter({particles.size.x * 0.5f, particles.size.y * 0.5f});
     float cameraSpeed = 500.f;  // movement speed
     float zoomLevel = 1.f;      // zoom factor
 
@@ -81,12 +82,27 @@ int main()
         0,  // Phosphorus
         800   // Phospholipid
     });
+    
+    const sf::Vector2f minBounds(0.0f, 0.0f);
+    const sf::Vector2f maxBounds = particles.size;
 
-    particles.addParticle(std::make_shared<Cell>(
-        sf::Vector2f(particles.size.x * 0.5, particles.size.y * 0.5),
-        sf::Vector2f{0.f, 0.f},
-        10.0f
-    ));
+    std::random_device rd;
+    std::mt19937 gen(rd());
+    std::uniform_real_distribution<float> posX(minBounds.x, maxBounds.x);
+    std::uniform_real_distribution<float> posY(minBounds.y, maxBounds.y);
+    for (int i = 0; i < 40; i++)
+    {
+        particles.addParticle(std::make_shared<Cell>(
+            sf::Vector2f(posX(gen), posY(gen)),
+            sf::Vector2f{0.f, 0.f},
+            10.0f
+        ));
+    }
+    // particles.addParticle(std::make_shared<Cell>(
+    //     sf::Vector2f(10, 10),
+    //     sf::Vector2f{1000.f, 1000.f},
+    //     10.0f
+    // ));
 
     // particles.addParticle(std::make_shared<Molecule>(
     //     particles.size - sf::Vector2f(200.0f, 200.0f),
@@ -156,7 +172,7 @@ int main()
                     camera.move(moveDir * cameraSpeed * dt);
         }
 
-
+        
         // Emit particles at mouse position if left mouse button is held
         if (sf::Mouse::isButtonPressed(sf::Mouse::Button::Left))
         {

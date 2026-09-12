@@ -42,10 +42,10 @@ float Cell::convert_molecule(Cytoplasm in, Cytoplasm out, float amount, float at
     return amount - printableAmount;
 };
 
-float Cell::metabolize_sugar(float amount) {
+float Cell::metabolize_sugar(float amount, float dt) {
     if (amount <= 0.0f) return 0.0f;
     float metabolizeLimiter = radius_ * .1;
-    float metabolizeAmount = std::min(metabolizeLimiter , amount);
+    float metabolizeAmount = std::min(metabolizeLimiter , amount) * dt;
 
     return convert_molecule(
         Cytoplasm().add(MoleculeType::Sugar).add(MoleculeType::Oxygen, 2), 
@@ -55,10 +55,10 @@ float Cell::metabolize_sugar(float amount) {
     );
 }
 
-float Cell::photosynthesize(float amount) {
+float Cell::photosynthesize(ParticleSystem* system, float amount, float dt) {
     if (amount <= 0.0f) return 0.0f;
-    float photoAmout = 1 - (position_.y / deathSystem->size.y);
-    float actual_amount = std::min(photoAmout, amount);
+    float photoAmout = position_.y / system->size.y;
+    float actual_amount = std::min(photoAmout, amount) * dt;
 
 
 

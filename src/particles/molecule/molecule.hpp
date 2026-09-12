@@ -77,7 +77,7 @@ public:
 
 private:
     MoleculeProperties properties_;
-    void resetRadius(){radius_ = sqrt(mass_) / (properties_.density * (.3));};
+    void resetRadius(){radius_ = 2 * sqrt(mass_ / (properties_.density));};
     
 };
 

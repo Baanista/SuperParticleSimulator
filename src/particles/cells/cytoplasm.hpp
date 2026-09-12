@@ -17,6 +17,7 @@ public:
     Cytoplasm& add(MoleculeType type, float amount) {
         cytoplasm_[type] += amount;
         space += amount * MoleculeProperties(type).density;
+        mass += amount;
         return *this;
     }
 
@@ -29,6 +30,7 @@ public:
     {
         cytoplasm_[type] -= amount;
         space -= amount * MoleculeProperties(type).density;
+        mass -= amount;
         return *this;
     };
 
@@ -44,5 +46,5 @@ public:
 
     std::array<float, static_cast<std::size_t>(MoleculeType::COUNT)> cytoplasm_;
     float space;
-    
+    float mass;
 };

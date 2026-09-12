@@ -9,15 +9,16 @@ Cell::Cell(
       cytoplasm_(),
       managecytoplasm_()
 {
+    age_ = 0;
     outerColor = sf::Color::White;
     dna_ = std::make_shared<DNA>(0);
     atp_ = starting_atp;
     color_ = sf::Color::Cyan;
     angle_ = sf::degrees(0);
-    radius_ = 10.0f;
-    lifetime_ = 120;
-    mutationAmount = .01f;
+    mutationAmount = .1f;
     cytoplasm_.add(Phospholipid, 10).add(CarbonDioxide, 10).add(Water, 10);
+    radius_ = radius();
+    lifetime_ = radius_ * radius_;
 };
 
 Cell::~Cell() noexcept
@@ -27,8 +28,6 @@ Cell::~Cell() noexcept
 
 void Cell::onDeath(ParticleSystem* system) {
 
-
-    radius_ = 10;
     
     // cell dies and emmits all of its contents from the cytoplasm
     for (size_t i = 0; i < MoleculeType::COUNT; i++)
@@ -56,29 +55,23 @@ void Cell::update(float dt, const std::vector<Particle*>& nearby, ParticleSystem
 
     ParticleMatter::update(dt, nearby, system); //issue here 
     deathSystem = system;
-    
 
 
     // temporary way of optaining atp
     lifetime_ -= dt;
-
+    radius_ = radius();
     atp_ -= (radius_ * radius_ * 0.001 + 0.01) * .1 * dt;
 
 
 
-    radius_ = std::min({cytoplasm_[Phospholipid] * 5, 20.0f});
-    mass_ = atp_ * .5 * 0.3;
+    mass_ = atp_ * .5 * 0.3 + cytoplasm_.mass;
     
     // limits the amount of atp produced
     atp_ = std::min({radius_ * radius_, atp_});
 
+    setInputGenes().setCytoplasmInput();
     dna_->run();
-    setInputGenes().setCytoplasmInput().useOutputGenes().manageCytoplasm();
-
-    if (cytoplasm_[Phospholipid] > 5 && age_ > 10)
-    {
-        duplicate(system);
-    }
+    useOutputGenes(system, dt).manageCytoplasm();
 
     float cytoplasmSpace = getSpaceAmount();
     for (Particle* p : nearby) {
@@ -93,7 +86,7 @@ void Cell::update(float dt, const std::vector<Particle*>& nearby, ParticleSystem
         {
             if (isTouching(molecule, radius_ * 2) && molecule->getMass() > 0){
                 if (managecytoplasm_[molecule->getMoleculeType()] > 0.0f){
-                    absorb(molecule, molecule->getMoleculeType(), managecytoplasm_[molecule->getMoleculeType()]);
+                    absorb(molecule, molecule->getMoleculeType(), managecytoplasm_[molecule->getMoleculeType()] * dt);
                 }
             }
         }
@@ -101,7 +94,7 @@ void Cell::update(float dt, const std::vector<Particle*>& nearby, ParticleSystem
 
     for (size_t i = 0; i < MoleculeType::COUNT; i++)
     {
-        if (managecytoplasm_[i] < - mass_ * 0.3)
+        if (managecytoplasm_[i] < -2.5)
         {
             auto type = static_cast<MoleculeType>(i);
             drop(system ,type, std::abs(managecytoplasm_[type]));
@@ -124,7 +117,7 @@ Cell& Cell::drop(ParticleSystem* system, MoleculeType type, float amount){
     ));
 
     cytoplasm_.remove(type, dropAmount);
-
+    dna_->setValue(type, 0.0f);
     return *this;
 }
 
@@ -136,6 +129,7 @@ Cell& Cell::absorb(Molecule* molecule, MoleculeType type, float amount){
     cytoplasm_.add(type, absorbAmount);
     molecule->mass_ -= absorbAmount;
     managecytoplasm_.remove(type, absorbAmount);
+    // velocity_ += (absorbAmount / mass_) * molecule->velocity_;
     return *this;
 }
 
@@ -147,6 +141,8 @@ Cell& Cell::setInputGenes(){
     dna_->setValue(In_Genes::ATP,    atp_);
     float geneangle = angle_.asRadians();
     dna_->setValue(In_Genes::ANGLE,  geneangle);
+    dna_->setValue(In_Genes::AGE, age_);
+    dna_->setValue(In_Genes::LIFETIME, lifetime_);
     return (*this);
 };
 
@@ -158,18 +154,23 @@ Cell& Cell::setCytoplasmInput(){
     return (*this);
 };
 
-Cell& Cell::useOutputGenes(){
+Cell& Cell::useOutputGenes(ParticleSystem* system, float dt){
     auto clampColor = [](int value) {
         return static_cast<std::uint8_t>(std::clamp(value, 0, 255));
     };
     atp_ -= std::abs((*dna_)[Out_Genes::ROTATE] * 0.05);
     angle_ += sf::radians(dna_->resetValue(Out_Genes::ROTATE));
-    photosynthesize(dna_->resetValue(Out_Genes::PHOTOSYNTHESIZE));
-    metabolize_sugar(dna_->resetValue(Out_Genes::METABOLIZE_SUGAR));
+    photosynthesize(system, dna_->resetValue(Out_Genes::PHOTOSYNTHESIZE), dt);
+    metabolize_sugar(dna_->resetValue(Out_Genes::METABOLIZE_SUGAR), dt);
 
     outerColor.r = clampColor(dna_->resetValue(Out_Genes::OUTRED));
     outerColor.b = clampColor(dna_->resetValue(Out_Genes::OUTBLUE));
     outerColor.g = clampColor(dna_->resetValue(Out_Genes::OUTGREEN));
+
+    float dupeAmount = dna_->resetValue(Out_Genes::DUPLICATE);
+    if (dupeAmount > 1 && age_ >= 5 && radius_ > 10){
+        duplicate(system);
+    }
 
     return (*this);
 };
@@ -178,7 +179,7 @@ Cell& Cell::manageCytoplasm() {
     for (size_t type = 0; type < MoleculeType::COUNT; type++) {
         float geneVal = dna_->getGene(static_cast<MoleculeType>(type));
         managecytoplasm_[type] = geneVal;
-        dna_->setValue(static_cast<MoleculeType>(type), 0.0f);
+        dna_->setValue(static_cast<MoleculeType>(type), std::min(geneVal, 0.0f));
     }
     return *this;
 }
@@ -203,11 +204,14 @@ std::shared_ptr<Cell> Cell::duplicate(ParticleSystem* system)
         newCell->cytoplasm_[i] = cytoplasm_[i] * otherNutrientPriority;
         cytoplasm_[i] *= (1.0f - otherNutrientPriority);
     }
+    newCell->cytoplasm_.space *= otherNutrientPriority;
+    cytoplasm_.space *= (1.0f - otherNutrientPriority);
+    
     
     // 2. Generate a slightly mutated color based on the parent's color
     std::random_device rd;
     std::mt19937 gen(rd());
-    std::normal_distribution<float> delta(0, mutationAmount * 200); // Small tint variance
+    std::normal_distribution<float> delta(0, mutationAmount * 300); // Small tint variance
 
     auto clampColor = [](int value) {
         return static_cast<std::uint8_t>(std::clamp(value, 0, 255));
@@ -224,11 +228,11 @@ std::shared_ptr<Cell> Cell::duplicate(ParticleSystem* system)
     newCell->deathSystem = this->deathSystem;
     newCell->dna_ = dna_->mutate(mutationAmount);
     std::normal_distribution<float> mutationAmountGen(0.0f, mutationAmount);
-    newCell->mutationAmount = mutationAmount + mutationAmountGen(gen);
+    newCell->mutationAmount = std::min(mutationAmount + mutationAmountGen(gen), .005f);
+
 
     // 3. Register offspring particle system
     system->addParticle(newCell);
-
     return newCell;
 }
 
@@ -261,6 +265,6 @@ Cell& Cell::kill()
 
 bool Cell::isAlive()
 {
-    bool isalive = atp_ > 0 && lifetime_ > 0;
+    bool isalive = atp_ > 0 && lifetime_ > 0 && radius_ > 5;
     return isalive;
 }

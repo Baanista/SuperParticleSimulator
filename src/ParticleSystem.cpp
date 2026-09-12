@@ -65,7 +65,7 @@ void ParticleSystem::update(float dt) {
     for (size_t i = 0; i < particles_.size(); ) {
         auto& particle = particles_[i];
 
-        // particle->applyForce({0.f, downwardGravity * dt});
+        particle->applyForce({0.f, downwardGravity * dt});
         // make particles wrap around the bounds of the simulation area
         sf::Vector2f pos = particle->getPosition();
         if (particle->getPosition().x < 0) 

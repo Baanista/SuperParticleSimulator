@@ -20,7 +20,7 @@ public:
     ParticleSystem(unsigned int maxParticles, sf::Vector2f size, BorderBehavior behavior = WRAP);
 
     bool nBodyGravity = false;
-    float downwardGravity = 10.f;
+    float downwardGravity = 0.0f;
     BorderBehavior borderBehavior = WRAP;
     sf::Vector2f size;
 

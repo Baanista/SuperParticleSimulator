@@ -46,10 +46,10 @@ void ParticleMatter::update(float dt, const std::vector<Particle*>& nearby, Part
             continue;
 
 
-        nearAddVelocity(other, -1 * dt * mass_, detectionRange_ );
+        nearAddVelocity(other, -2 * dt * other->mass_, detectionRange_);
         // nearAddVelocity(other, 20 * dt, detectionRange_ * .8);
         // nearAddVelocity(other, -40 * dt, detectionRange_ * .8);
-        other->nearAddVelocity(this, -1 * dt * other->mass_, detectionRange_);
+        other->nearAddVelocity(this, -2 * dt * mass_, detectionRange_);
     }
 
     for (Particle* p : nearby) {
