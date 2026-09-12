@@ -26,8 +26,13 @@ public:
 
     Cell& kill();
     Cell& drop(ParticleSystem* system, MoleculeType type, float amount);
+    Cell& dropExtraCytoplasm(ParticleSystem* system);
     Cell& absorb(Molecule* molecule, MoleculeType type, float amount);
+    void consume(Cell* other);
     float radius(){return std::min(cytoplasm_[Phospholipid] * 4, 30.f);};
+
+    float getSpaceAmount() {return radius_ * radius_ * 2;};
+
 
 private:
     sf::Color outerColor;
@@ -36,7 +41,6 @@ private:
     float atp_; // amount of energy
     sf::Angle angle_;
     
-    float getSpaceAmount() {return radius_ * radius_ * 2;};
     Cytoplasm cytoplasm_;
 
     // reseted every tick. Postivie values means the molocles that are wanted to absorbe. Negative is the amout that is wanted to drop

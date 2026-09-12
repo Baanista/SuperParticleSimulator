@@ -90,11 +90,20 @@ void Cell::update(float dt, const std::vector<Particle*>& nearby, ParticleSystem
                 }
             }
         }
+        Cell* cell = dynamic_cast<Cell*>(p);
+        if (cell){
+            if (cell->getSpaceAmount() * 5 < getSpaceAmount()){
+                consume(cell);
+            }
+            if (getSpaceAmount() * 5 < cell->getSpaceAmount()){
+                cell->consume(this);
+            }
+        }
     }
 
     for (size_t i = 0; i < MoleculeType::COUNT; i++)
     {
-        if (managecytoplasm_[i] < -2.5)
+        if (managecytoplasm_[i] < -5)
         {
             auto type = static_cast<MoleculeType>(i);
             drop(system ,type, std::abs(managecytoplasm_[type]));
@@ -102,11 +111,15 @@ void Cell::update(float dt, const std::vector<Particle*>& nearby, ParticleSystem
     }
 }
 
+void Cell::consume(Cell* other){
+
+}
+
 Cell& Cell::drop(ParticleSystem* system, MoleculeType type, float amount){
     float aviableDropAmount = cytoplasm_[type];
     float dropAmount = std::min({amount, aviableDropAmount});
 
-    sf::Vector2f offset(radius_ * 2, angle_ + sf::degrees(180));
+    sf::Vector2f offset(radius_ * 2 + static_cast<float>(type), angle_ + sf::degrees(180));
     sf::Vector2f newPos = position_ + offset;
     
     system->addParticle(std::make_shared<Molecule>(
@@ -121,6 +134,12 @@ Cell& Cell::drop(ParticleSystem* system, MoleculeType type, float amount){
     return *this;
 }
 
+Cell& Cell::dropExtraCytoplasm(ParticleSystem* system){
+    // float
+
+    return *this;
+}
+
 Cell& Cell::absorb(Molecule* molecule, MoleculeType type, float amount){
     if (molecule->getProperties().type != type) {return *this;};
     float cytoplasmSpace = getSpaceAmount();
@@ -132,8 +151,6 @@ Cell& Cell::absorb(Molecule* molecule, MoleculeType type, float amount){
     // velocity_ += (absorbAmount / mass_) * molecule->velocity_;
     return *this;
 }
-
-
 
 Cell& Cell::setInputGenes(){
     
@@ -182,6 +199,10 @@ Cell& Cell::manageCytoplasm() {
         dna_->setValue(static_cast<MoleculeType>(type), std::min(geneVal, 0.0f));
     }
     return *this;
+}
+
+void Cell::consume(Cell* other){
+    // for ()
 }
 
 std::shared_ptr<Cell> Cell::duplicate(ParticleSystem* system)
