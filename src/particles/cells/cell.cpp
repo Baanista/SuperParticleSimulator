@@ -135,7 +135,7 @@ Cell& Cell::drop(ParticleSystem* system, MoleculeType type, float amount){
 }
 
 Cell& Cell::dropExtraCytoplasm(ParticleSystem* system){
-    float extraSpace = ; 
+    // float extraSpace = ; 
 
     return *this;
 }
